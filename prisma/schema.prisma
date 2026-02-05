@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Пользователи
+model User {
+  id            String    @id @default(cuid())
+  email         String?   @unique
+  telegramId    String?   @unique
+  name          String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  companies     Company[]
+  documents     Document[]
+  counterparties Counterparty[]
+}
+
+// Компании / ИП / Самозанятые (реквизиты пользователя)
+model Company {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+
+  // Основные реквизиты
+  name        String   // Полное наименование
+  shortName   String?  // Краткое наименование
+  inn         String   // ИНН
+  kpp         String?  // КПП (только для юрлиц)
+  ogrn        String?  // ОГРН / ОГРНИП
+  address     String?  // Юридический адрес
+
+  // Банковские реквизиты
+  bankName    String?  // Название банка
+  bik         String?  // БИК
+  accountNumber String? // Расчётный счёт
+  corrAccount String?  // Корреспондентский счёт
+
+  // Контакты
+  phone       String?
+  directorName String? // ФИО руководителя
+  directorTitle String? // Должность (Генеральный директор, ИП, и т.д.)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  documentsAsSupplier  Document[] @relation("Supplier")
+  documentsAsBuyer     Document[] @relation("Buyer")
+
+  @@index([inn])
+}
+
+// Контрагенты (сохранённые)
+model Counterparty {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+
+  name        String
+  inn         String
+  kpp         String?
+  address     String?
+  bankName    String?
+  bik         String?
+  accountNumber String?
+  corrAccount String?
+  phone       String?
+  contactPerson String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([inn])
+}
+
+// Документы
+model Document {
+  id          String       @id @default(cuid())
+  type        DocumentType
+  number      String       // Номер документа
+  date        DateTime     // Дата документа
+  userId      String?
+  user        User?        @relation(fields: [userId], references: [id])
+
+  supplierId  String?
+  supplier    Company?     @relation("Supplier", fields: [supplierId], references: [id])
+  buyerId     String?
+  buyer       Company?     @relation("Buyer", fields: [buyerId], references: [id])
+
+  // JSON с полными данными документа (реквизиты, позиции, условия)
+  data        Json
+
+  // Суммы
+  totalAmount Decimal?     @db.Decimal(12, 2)
+  vatAmount   Decimal?     @db.Decimal(12, 2)
+
+  // Связь с другими документами (акт → счёт, и т.д.)
+  parentId    String?
+  parent      Document?    @relation("LinkedDocuments", fields: [parentId], references: [id])
+  children    Document[]   @relation("LinkedDocuments")
+
+  // Сессия для анонимных пользователей
+  sessionId   String?
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([userId])
+  @@index([sessionId])
+  @@index([type])
+}
+
+enum DocumentType {
+  INVOICE    // Счёт на оплату
+  ACT        // Акт выполненных работ
+  CONTRACT   // Договор оказания услуг
+}
