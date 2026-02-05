@@ -4,6 +4,7 @@ import { Breadcrumbs } from '@/components/seo/breadcrumbs'
 import { FAQSchema, HowToSchema } from '@/components/seo/json-ld'
 import { FileText, Scale, Zap, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
+import { PricingBanner } from '@/components/layout/pricing-banner'
 
 export const metadata: Metadata = {
   title: 'Создать договор оказания услуг онлайн бесплатно — Генератор договоров',
@@ -115,6 +116,8 @@ export default function ContractPage() {
             </Link>
           </div>
         </section>
+
+        <PricingBanner />
 
         {/* SEO-контент */}
         <section className="mt-12 prose prose-gray max-w-none">

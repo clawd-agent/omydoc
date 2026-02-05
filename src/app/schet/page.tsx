@@ -4,6 +4,7 @@ import { Breadcrumbs } from '@/components/seo/breadcrumbs'
 import { FAQSchema, HowToSchema } from '@/components/seo/json-ld'
 import { FileText, Zap, Shield, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
+import { PricingBanner } from '@/components/layout/pricing-banner'
 
 export const metadata: Metadata = {
   title: 'Создать счёт на оплату онлайн бесплатно — Генератор счетов',
@@ -121,6 +122,9 @@ export default function InvoicePage() {
             </Link>
           </div>
         </section>
+
+        {/* Тарифы */}
+        <PricingBanner />
 
         {/* SEO-текст */}
         <section className="mt-12 prose prose-gray max-w-none">

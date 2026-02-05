@@ -20,6 +20,9 @@ export function Header() {
           <Link href="/dogovor" className="text-gray-600 hover:text-gray-900 transition-colors">
             Договор
           </Link>
+          <Link href="/pricing" className="text-gray-600 hover:text-gray-900 transition-colors">
+            Тарифы
+          </Link>
         </nav>
 
         {/* Мобильное меню — простое */}
@@ -27,6 +30,7 @@ export function Header() {
           <Link href="/schet" className="text-gray-600">Счёт</Link>
           <Link href="/akt" className="text-gray-600">Акт</Link>
           <Link href="/dogovor" className="text-gray-600">Договор</Link>
+          <Link href="/pricing" className="text-gray-600">Тарифы</Link>
         </nav>
       </div>
     </header>

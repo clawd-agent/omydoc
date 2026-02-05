@@ -33,6 +33,7 @@ export function Footer() {
           <div>
             <h4 className="font-semibold mb-3">Полезное</h4>
             <ul className="space-y-2 text-sm">
+              <li><Link href="/pricing" className="text-gray-600 hover:text-gray-900">Тарифы</Link></li>
               <li><Link href="/schet" className="text-gray-600 hover:text-gray-900">Как выставить счёт</Link></li>
               <li><Link href="/akt" className="text-gray-600 hover:text-gray-900">Образец акта 2026</Link></li>
               <li><Link href="/dogovor" className="text-gray-600 hover:text-gray-900">Шаблон договора</Link></li>
