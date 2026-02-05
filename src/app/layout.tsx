@@ -4,6 +4,7 @@ import "./globals.css"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { WebApplicationSchema, OrganizationSchema } from "@/components/seo/json-ld"
+import { YandexMetrika } from "@/components/seo/yandex-metrika"
 
 const inter = Inter({
   subsets: ["cyrillic", "latin"],
@@ -45,6 +46,7 @@ export default function RootLayout({
         <OrganizationSchema />
       </head>
       <body className={`${inter.className} antialiased min-h-screen flex flex-col`}>
+        <YandexMetrika />
         <Header />
         <main className="flex-1">
           {children}
