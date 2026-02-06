@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { FileDown, Loader2 } from 'lucide-react'
+import { FileDown, Loader2, Calendar, Hash } from 'lucide-react'
 import { CompanyFields } from './company-fields'
 import { LineItemsTable } from './line-items-table'
 import type { CompanyInfo, LineItem, InvoiceData } from '@/types'
@@ -36,7 +36,6 @@ export function InvoiceForm() {
   const totals = useMemo(() => calculateTotals(items), [items])
 
   const handleGenerate = useCallback(async () => {
-    // Базовая валидация
     if (!supplier.inn || !supplier.name) {
       setError('Заполните реквизиты поставщика (ИНН и наименование)')
       return
@@ -83,7 +82,6 @@ export function InvoiceForm() {
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
       
-      // Отправляем цели в Яндекс.Метрику
       trackPdfGenerated('invoice')
       trackPdfDownloaded('invoice')
     } catch (e) {
@@ -99,18 +97,25 @@ export function InvoiceForm() {
     <div className="space-y-6">
       {/* Номер и дата */}
       <Card>
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
-              <Label htmlFor="invoice-number">Номер счёта</Label>
+              <Label htmlFor="invoice-number">
+                <Hash className="h-3.5 w-3.5" />
+                Номер счёта
+              </Label>
               <Input
                 id="invoice-number"
                 value={number}
                 onChange={(e) => setNumber(e.target.value)}
+                className="font-mono"
               />
             </div>
             <div>
-              <Label htmlFor="invoice-date">Дата</Label>
+              <Label htmlFor="invoice-date">
+                <Calendar className="h-3.5 w-3.5" />
+                Дата
+              </Label>
               <Input
                 id="invoice-date"
                 type="date"
@@ -124,7 +129,7 @@ export function InvoiceForm() {
 
       {/* Поставщик */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent>
           <CompanyFields
             prefix="supplier"
             label="Поставщик"
@@ -137,7 +142,7 @@ export function InvoiceForm() {
 
       {/* Покупатель */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent>
           <CompanyFields
             prefix="buyer"
             label="Покупатель"
@@ -149,32 +154,32 @@ export function InvoiceForm() {
 
       {/* Позиции */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent>
           <LineItemsTable items={items} onChange={setItems} />
         </CardContent>
       </Card>
 
       {/* Итого */}
       <Card>
-        <CardContent className="pt-6">
-          <div className="space-y-2 text-right">
-            <div className="flex justify-end gap-4">
-              <span className="text-gray-600">Итого без НДС:</span>
-              <span className="font-medium w-32">{formatMoney(totals.totalAmount)} ₽</span>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="flex justify-end gap-4 text-sm">
+              <span className="text-slate-500 font-medium">Итого без НДС:</span>
+              <span className="font-bold text-slate-900 w-32 text-right font-mono">{formatMoney(totals.totalAmount)} ₽</span>
             </div>
             {totals.totalVat > 0 && (
-              <div className="flex justify-end gap-4">
-                <span className="text-gray-600">НДС:</span>
-                <span className="font-medium w-32">{formatMoney(totals.totalVat)} ₽</span>
+              <div className="flex justify-end gap-4 text-sm">
+                <span className="text-slate-500 font-medium">НДС:</span>
+                <span className="font-bold text-slate-900 w-32 text-right font-mono">{formatMoney(totals.totalVat)} ₽</span>
               </div>
             )}
-            <Separator />
+            <Separator className="my-4" />
             <div className="flex justify-end gap-4">
-              <span className="text-lg font-semibold">Всего к оплате:</span>
-              <span className="text-lg font-bold w-32">{formatMoney(totals.grandTotal)} ₽</span>
+              <span className="text-lg font-bold text-slate-900">Всего к оплате:</span>
+              <span className="text-xl font-black text-slate-900 w-36 text-right font-mono">{formatMoney(totals.grandTotal)} ₽</span>
             </div>
             {totals.grandTotal > 0 && (
-              <p className="text-sm text-gray-500 italic text-right">
+              <p className="text-sm text-slate-500 font-medium italic text-right mt-2">
                 {amountToWords(totals.grandTotal)}
               </p>
             )}
@@ -184,7 +189,7 @@ export function InvoiceForm() {
 
       {/* Примечание */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent>
           <Label htmlFor="notes">Примечание (необязательно)</Label>
           <Textarea
             id="notes"
@@ -198,7 +203,7 @@ export function InvoiceForm() {
 
       {/* Ошибка */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-xl font-medium">
           {error}
         </div>
       )}
@@ -207,8 +212,8 @@ export function InvoiceForm() {
       <Button
         onClick={handleGenerate}
         disabled={loading}
-        size="lg"
-        className="w-full text-lg py-6"
+        size="xl"
+        className="w-full"
       >
         {loading ? (
           <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> Генерация PDF...</>

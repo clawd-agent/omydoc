@@ -8,8 +8,8 @@ import { Search, Building2, Loader2 } from 'lucide-react'
 import type { CompanyInfo } from '@/types'
 
 interface CompanyFieldsProps {
-  prefix: string // 'supplier' | 'buyer'
-  label: string // 'Поставщик' | 'Покупатель'
+  prefix: string
+  label: string
   value: CompanyInfo
   onChange: (data: CompanyInfo) => void
   showBankDetails?: boolean
@@ -24,7 +24,6 @@ export function CompanyFields({ prefix, label, value, onChange, showBankDetails 
     onChange({ ...value, [field]: val })
   }, [value, onChange])
 
-  // Поиск компании по ИНН
   const searchByInn = useCallback(async (query: string) => {
     if (query.length < 3) {
       setSuggestions([])
@@ -48,7 +47,6 @@ export function CompanyFields({ prefix, label, value, onChange, showBankDetails 
     }
   }, [])
 
-  // Поиск банка по БИК
   const searchByBik = useCallback(async (bik: string) => {
     if (bik.length !== 9) return
 
@@ -86,9 +84,11 @@ export function CompanyFields({ prefix, label, value, onChange, showBankDetails 
   }, [value, onChange])
 
   return (
-    <div className="space-y-4">
-      <h3 className="font-semibold text-lg flex items-center gap-2">
-        <Building2 className="h-5 w-5" />
+    <div className="space-y-5">
+      <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
+        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+          <Building2 className="h-4 w-4 text-blue-600" />
+        </div>
         {label}
       </h3>
 
@@ -98,13 +98,14 @@ export function CompanyFields({ prefix, label, value, onChange, showBankDetails 
         <div className="flex gap-2">
           <Input
             id={`${prefix}-inn`}
-            placeholder="Введите ИНН"
+            placeholder="Введите ИНН для поиска"
             value={value.inn}
             onChange={(e) => {
               updateField('inn', e.target.value)
               searchByInn(e.target.value)
             }}
             onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+            className="font-mono"
           />
           <Button
             type="button"
@@ -112,23 +113,26 @@ export function CompanyFields({ prefix, label, value, onChange, showBankDetails 
             size="icon"
             onClick={() => searchByInn(value.inn)}
             disabled={loading}
+            className="shrink-0"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
           </Button>
         </div>
 
-        {/* Выпадающий список подсказок */}
         {showSuggestions && suggestions.length > 0 && (
-          <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
+          <div className="absolute z-20 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl max-h-56 overflow-y-auto">
             {suggestions.map((s, i) => (
               <button
                 key={i}
                 type="button"
-                className="w-full text-left px-3 py-2 hover:bg-gray-100 border-b last:border-b-0 text-sm"
+                className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-b-0 transition-colors"
                 onClick={() => selectSuggestion(s)}
               >
-                <div className="font-medium">{s.shortName || s.name}</div>
-                <div className="text-gray-500 text-xs">ИНН: {s.inn} {s.address ? `• ${s.address}` : ''}</div>
+                <div className="font-semibold text-slate-900">{s.shortName || s.name}</div>
+                <div className="text-slate-500 text-sm font-medium mt-0.5">
+                  ИНН: <span className="font-mono">{s.inn}</span>
+                  {s.address && ` • ${s.address}`}
+                </div>
               </button>
             ))}
           </div>
@@ -147,7 +151,7 @@ export function CompanyFields({ prefix, label, value, onChange, showBankDetails 
       </div>
 
       {/* КПП + ОГРН */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor={`${prefix}-kpp`}>КПП</Label>
           <Input
@@ -155,6 +159,7 @@ export function CompanyFields({ prefix, label, value, onChange, showBankDetails 
             placeholder="КПП"
             value={value.kpp || ''}
             onChange={(e) => updateField('kpp', e.target.value)}
+            className="font-mono"
           />
         </div>
         <div>
@@ -164,6 +169,7 @@ export function CompanyFields({ prefix, label, value, onChange, showBankDetails 
             placeholder="ОГРН / ОГРНИП"
             value={value.ogrn || ''}
             onChange={(e) => updateField('ogrn', e.target.value)}
+            className="font-mono"
           />
         </div>
       </div>
@@ -180,7 +186,7 @@ export function CompanyFields({ prefix, label, value, onChange, showBankDetails 
       </div>
 
       {/* Руководитель */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor={`${prefix}-directorName`}>ФИО руководителя</Label>
           <Input
@@ -204,11 +210,11 @@ export function CompanyFields({ prefix, label, value, onChange, showBankDetails 
       {/* Банковские реквизиты */}
       {showBankDetails && (
         <>
-          <div className="border-t pt-4 mt-4">
-            <h4 className="font-medium text-sm text-gray-600 mb-3">Банковские реквизиты</h4>
+          <div className="border-t border-slate-200 pt-5 mt-5">
+            <h4 className="font-semibold text-sm text-slate-500 mb-4">Банковские реквизиты</h4>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor={`${prefix}-bik`}>БИК</Label>
               <Input
@@ -221,6 +227,7 @@ export function CompanyFields({ prefix, label, value, onChange, showBankDetails 
                     searchByBik(e.target.value)
                   }
                 }}
+                className="font-mono"
               />
             </div>
             <div>
@@ -234,7 +241,7 @@ export function CompanyFields({ prefix, label, value, onChange, showBankDetails 
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor={`${prefix}-account`}>Расчётный счёт</Label>
               <Input
@@ -242,6 +249,7 @@ export function CompanyFields({ prefix, label, value, onChange, showBankDetails 
                 placeholder="Расчётный счёт"
                 value={value.accountNumber || ''}
                 onChange={(e) => updateField('accountNumber', e.target.value)}
+                className="font-mono"
               />
             </div>
             <div>
@@ -251,6 +259,7 @@ export function CompanyFields({ prefix, label, value, onChange, showBankDetails 
                 placeholder="Корреспондентский счёт"
                 value={value.corrAccount || ''}
                 onChange={(e) => updateField('corrAccount', e.target.value)}
+                className="font-mono"
               />
             </div>
           </div>
