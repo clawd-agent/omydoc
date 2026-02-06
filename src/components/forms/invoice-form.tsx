@@ -10,7 +10,8 @@ import { Separator } from '@/components/ui/separator'
 import { FileDown, Loader2, Calendar, Hash } from 'lucide-react'
 import { CompanyFields } from './company-fields'
 import { LineItemsTable } from './line-items-table'
-import type { CompanyInfo, LineItem, InvoiceData } from '@/types'
+import { AIFillInput } from '@/components/ai/ai-fill-input'
+import type { CompanyInfo, LineItem, InvoiceData, VatRate } from '@/types'
 import { calculateLineItem, calculateTotals, formatMoney, generateDocNumber, todayISO, generateId } from '@/lib/documents/calculations'
 import { amountToWords } from '@/lib/documents/number-to-words'
 import { trackPdfGenerated, trackPdfDownloaded, trackGenerationError } from '@/lib/analytics/metrika'
@@ -32,8 +33,95 @@ export function InvoiceForm() {
   const [notes, setNotes] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [aiWarning, setAiWarning] = useState('')
 
   const totals = useMemo(() => calculateTotals(items), [items])
+
+  // Handle AI-parsed data
+  interface ParsedData {
+    supplier?: Record<string, string>
+    buyer?: Record<string, string>
+    items?: Array<Record<string, string | number>>
+    notes?: string
+  }
+  
+  const handleAIFill = useCallback((data: ParsedData) => {
+    // Fill supplier data
+    const supplierData = data.supplier
+    if (supplierData) {
+      setSupplier(prev => ({
+        ...prev,
+        name: supplierData.name || prev.name,
+        inn: supplierData.inn || prev.inn,
+        kpp: supplierData.kpp || prev.kpp,
+        ogrn: supplierData.ogrn || prev.ogrn,
+        address: supplierData.address || prev.address,
+        bankName: supplierData.bankName || prev.bankName,
+        bik: supplierData.bik || prev.bik,
+        accountNumber: supplierData.accountNumber || prev.accountNumber,
+        corrAccount: supplierData.corrAccount || prev.corrAccount,
+        phone: supplierData.phone || prev.phone,
+        directorName: supplierData.directorName || prev.directorName,
+        directorTitle: supplierData.directorTitle || prev.directorTitle,
+      }))
+    }
+
+    // Fill buyer data
+    const buyerData = data.buyer
+    if (buyerData) {
+      setBuyer(prev => ({
+        ...prev,
+        name: buyerData.name || prev.name,
+        inn: buyerData.inn || prev.inn,
+        kpp: buyerData.kpp || prev.kpp,
+        ogrn: buyerData.ogrn || prev.ogrn,
+        address: buyerData.address || prev.address,
+        bankName: buyerData.bankName || prev.bankName,
+        bik: buyerData.bik || prev.bik,
+        accountNumber: buyerData.accountNumber || prev.accountNumber,
+        corrAccount: buyerData.corrAccount || prev.corrAccount,
+        phone: buyerData.phone || prev.phone,
+        directorName: buyerData.directorName || prev.directorName,
+        directorTitle: buyerData.directorTitle || prev.directorTitle,
+      }))
+    }
+
+    // Fill line items
+    const itemsData = data.items
+    if (itemsData && Array.isArray(itemsData) && itemsData.length > 0) {
+      const validVatRates = [0, 5, 7, 10, 20, 22]
+      const warnings: string[] = []
+      
+      const newItems: LineItem[] = itemsData.map((item, idx) => {
+        const rawVat = Number(item.vatRate) || 0
+        // Если НДС невалидный — ставим 0 и запоминаем предупреждение
+        const vatRate = validVatRates.includes(rawVat) ? rawVat : 0
+        if (!validVatRates.includes(rawVat) && rawVat !== 0) {
+          warnings.push(`Позиция ${idx + 1}: AI указал НДС ${rawVat}% — проверьте`)
+        }
+        return calculateLineItem({
+          id: generateId(),
+          name: String(item.name || ''),
+          unit: String(item.unit || 'усл'),
+          quantity: Number(item.quantity) || 1,
+          price: Number(item.price) || 0,
+          vatRate: vatRate as VatRate,
+        })
+      })
+      setItems(newItems)
+      
+      if (warnings.length > 0) {
+        setAiWarning(warnings.join('. '))
+      } else {
+        setAiWarning('')
+      }
+    }
+
+    // Fill notes
+    if (data.notes) {
+      setNotes(data.notes)
+    }
+  }, [])
 
   const handleGenerate = useCallback(async () => {
     if (!supplier.inn || !supplier.name) {
@@ -95,6 +183,12 @@ export function InvoiceForm() {
 
   return (
     <div className="space-y-6">
+      {/* AI-заполнение */}
+      <AIFillInput 
+        documentType="invoice" 
+        onFill={handleAIFill}
+      />
+
       {/* Номер и дата */}
       <Card>
         <CardContent>
@@ -200,6 +294,17 @@ export function InvoiceForm() {
           />
         </CardContent>
       </Card>
+
+      {/* Предупреждение AI */}
+      {aiWarning && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-700 px-5 py-4 rounded-xl font-medium flex items-start gap-3">
+          <span className="text-xl">⚠️</span>
+          <div>
+            <div className="font-bold">Проверьте данные</div>
+            <div className="text-sm">{aiWarning}</div>
+          </div>
+        </div>
+      )}
 
       {/* Ошибка */}
       {error && (

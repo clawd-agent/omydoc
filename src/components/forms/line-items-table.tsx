@@ -20,6 +20,7 @@ const vatOptions: { value: string; label: string }[] = [
   { value: '7', label: '7%' },
   { value: '10', label: '10%' },
   { value: '20', label: '20%' },
+  { value: '22', label: '22%' },
 ]
 
 const unitOptions = ['шт', 'усл', 'ч', 'мес', 'компл', 'м²', 'м³', 'км', 'кг', 'л']

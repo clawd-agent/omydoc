@@ -37,6 +37,8 @@ const scales: ScaleWord[] = [
   { one: 'тысяча', few: 'тысячи', many: 'тысяч', feminine: true },
   { one: 'миллион', few: 'миллиона', many: 'миллионов', feminine: false },
   { one: 'миллиард', few: 'миллиарда', many: 'миллиардов', feminine: false },
+  { one: 'триллион', few: 'триллиона', many: 'триллионов', feminine: false },
+  { one: 'квадриллион', few: 'квадриллиона', many: 'квадриллионов', feminine: false },
 ]
 
 function pluralize(n: number, one: string, few: string, many: string): string {

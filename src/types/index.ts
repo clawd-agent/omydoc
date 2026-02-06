@@ -19,7 +19,7 @@ export interface CompanyInfo {
 }
 
 // Ставки НДС
-export type VatRate = 0 | 5 | 7 | 10 | 20
+export type VatRate = 0 | 5 | 7 | 10 | 20 | 22
 
 // Позиция в документе (товар/услуга)
 export interface LineItem {
@@ -89,6 +89,8 @@ export interface DaDataCompany {
     name: {
       full_with_opf: string
       short_with_opf: string
+      full?: string
+      short?: string
     }
     inn: string
     kpp: string | null

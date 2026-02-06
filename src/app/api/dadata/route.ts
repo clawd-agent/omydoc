@@ -17,8 +17,10 @@ export async function POST(request: NextRequest) {
           ? await findCompanyByInn(query.trim())
           : await suggestCompany(query.trim())
 
+        // DEBUG: Include raw data.name in response
+        const rawName = results[0]?.data?.name
         const companies = results.map(dadataToCompanyInfo)
-        return NextResponse.json({ suggestions: companies })
+        return NextResponse.json({ suggestions: companies, _debug: { rawName } })
       }
 
       case 'bank': {
