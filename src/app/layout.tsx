@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Inter, JetBrains_Mono } from "next/font/google"
 import "./globals.css"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
@@ -9,6 +9,13 @@ import { YandexMetrika } from "@/components/seo/yandex-metrika"
 const inter = Inter({
   subsets: ["cyrillic", "latin"],
   display: "swap",
+  variable: "--font-inter",
+})
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["cyrillic", "latin"],
+  display: "swap",
+  variable: "--font-jetbrains-mono",
 })
 
 export const metadata: Metadata = {
@@ -46,7 +53,7 @@ export default function RootLayout({
         <WebApplicationSchema />
         <OrganizationSchema />
       </head>
-      <body className={`${inter.className} antialiased min-h-screen flex flex-col`}>
+      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased min-h-screen flex flex-col bg-slate-50`}>
         <YandexMetrika />
         <Header />
         <main className="flex-1">
