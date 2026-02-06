@@ -7,7 +7,7 @@ export function Header() {
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 font-bold text-xl">
           <FileText className="h-6 w-6 text-blue-600" />
-          <span>ДокГен</span>
+          <span>OMyDoc</span>
         </Link>
 
         <nav className="hidden sm:flex items-center gap-6 text-sm">

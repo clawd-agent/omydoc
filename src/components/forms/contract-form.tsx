@@ -13,6 +13,7 @@ import { LineItemsTable } from './line-items-table'
 import type { CompanyInfo, LineItem, ContractData } from '@/types'
 import { calculateLineItem, calculateTotals, formatMoney, generateDocNumber, todayISO, generateId } from '@/lib/documents/calculations'
 import { amountToWords } from '@/lib/documents/number-to-words'
+import { trackPdfGenerated, trackPdfDownloaded, trackGenerationError } from '@/lib/analytics/metrika'
 
 const emptyCompany: CompanyInfo = {
   name: '', inn: '', kpp: '', ogrn: '', address: '',
@@ -100,8 +101,13 @@ export function ContractForm() {
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
+      
+      // Отправляем цели в Яндекс.Метрику
+      trackPdfGenerated('contract')
+      trackPdfDownloaded('contract')
     } catch (e) {
       setError('Ошибка генерации PDF. Попробуйте ещё раз.')
+      trackGenerationError('contract', e instanceof Error ? e.message : 'Unknown error')
       console.error(e)
     } finally {
       setLoading(false)

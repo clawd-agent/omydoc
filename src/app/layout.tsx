@@ -13,24 +13,25 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "ДокГен — Генератор документов для бизнеса",
-    template: "%s | ДокГен",
+    default: "OMyDoc — Генератор документов для бизнеса",
+    template: "%s | OMyDoc",
   },
   description: "Бесплатный онлайн-генератор бизнес-документов: счета на оплату, акты выполненных работ, договоры. Авто-заполнение по ИНН. Скачайте PDF за 2 минуты.",
   keywords: "генератор документов, счёт на оплату онлайн, акт выполненных работ, договор оказания услуг, создать счёт бесплатно",
-  authors: [{ name: "ДокГен" }],
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://docgen.ru"),
+  authors: [{ name: "OMyDoc" }],
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://omydoc.ru"),
   openGraph: {
     type: "website",
     locale: "ru_RU",
-    siteName: "ДокГен",
+    siteName: "OMyDoc",
   },
   robots: {
     index: true,
     follow: true,
   },
   verification: {
-    // yandex: "ваш-код-верификации", // Добавить после подключения Вебмастера
+    yandex: "f88499d8beaf7ecd",
+    google: "J8neJsfPcowZw886NdR_eV6GRNRAmb2hiAKG_gu85KQ",
   },
 }
 

@@ -12,7 +12,7 @@ export function Footer() {
           <div>
             <Link href="/" className="flex items-center gap-2 font-bold text-lg mb-3">
               <FileText className="h-5 w-5 text-blue-600" />
-              ДокГен
+              OMyDoc
             </Link>
             <p className="text-sm text-gray-500">
               Бесплатный онлайн-генератор бизнес-документов для малого бизнеса
@@ -52,7 +52,7 @@ export function Footer() {
         </div>
 
         <div className="border-t mt-8 pt-6 text-center text-sm text-gray-400">
-          © {currentYear} ДокГен. Бесплатный генератор документов для бизнеса.
+          © {currentYear} OMyDoc. Бесплатный генератор документов для бизнеса.
         </div>
       </div>
     </footer>

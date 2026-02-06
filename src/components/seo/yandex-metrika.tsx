@@ -2,13 +2,9 @@
 
 import Script from 'next/script'
 
-// Яндекс.Метрика — раскомментировать и вставить ID после подключения в Вебмастере
-// Создать счётчик: https://metrika.yandex.ru/
-const METRIKA_ID = process.env.NEXT_PUBLIC_YANDEX_METRIKA_ID
+const METRIKA_ID = 106680198
 
 export function YandexMetrika() {
-  if (!METRIKA_ID) return null
-
   return (
     <>
       <Script id="yandex-metrika" strategy="afterInteractive">
@@ -17,20 +13,24 @@ export function YandexMetrika() {
           m[i].l=1*new Date();
           for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
           k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
-          (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+          (window, document, "script", "https://mc.yandex.ru/metrika/tag.js?id=106680198", "ym");
 
-          ym(${METRIKA_ID}, "init", {
-            clickmap:true,
-            trackLinks:true,
-            accurateTrackBounce:true,
-            webvisor:true
+          ym(106680198, "init", {
+            ssr: true,
+            webvisor: true,
+            clickmap: true,
+            ecommerce: "dataLayer",
+            referrer: document.referrer,
+            url: location.href,
+            accurateTrackBounce: true,
+            trackLinks: true
           });
         `}
       </Script>
       <noscript>
         <div>
           <img
-            src={`https://mc.yandex.ru/watch/${METRIKA_ID}`}
+            src="https://mc.yandex.ru/watch/106680198"
             style={{ position: 'absolute', left: '-9999px' }}
             alt=""
           />
