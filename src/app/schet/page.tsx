@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { InvoiceForm } from '@/components/forms/invoice-form'
 import { Breadcrumbs } from '@/components/seo/breadcrumbs'
 import { FAQSchema, HowToSchema } from '@/components/seo/json-ld'
-import { FileText, Zap, Shield, ArrowRight } from 'lucide-react'
+import { FileText, Zap, Shield, ArrowRight, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
 import { PricingBanner } from '@/components/layout/pricing-banner'
 
@@ -56,42 +56,42 @@ export default function InvoicePage() {
       <FAQSchema items={faqItems} />
       <HowToSchema name="Как создать счёт на оплату онлайн" steps={howToSteps} />
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 py-10">
         <Breadcrumbs items={[{ name: 'Счёт на оплату', href: '/schet' }]} />
 
         {/* H1 + подзаголовок */}
-        <header className="text-center mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Создать счёт на оплату онлайн бесплатно
+        <header className="text-center mb-12">
+          <h1 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight mb-5">
+            Создать счёт на оплату
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-slate-500 font-medium max-w-2xl mx-auto leading-relaxed">
             Заполните реквизиты — скачайте готовый PDF за 2 минуты.
-            Авто-заполнение по ИНН, расчёт НДС, сумма прописью. Без регистрации.
+            Авто-заполнение по ИНН, расчёт НДС, сумма прописью.
           </p>
         </header>
 
         {/* Как это работает */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-          <div className="text-center p-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <FileText className="h-6 w-6 text-blue-600" />
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center">
+            <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <FileText className="h-7 w-7 text-blue-600" />
             </div>
-            <h3 className="font-semibold mb-1">1. Введите реквизиты</h3>
-            <p className="text-sm text-gray-500">ИНН → данные заполнятся автоматически из ЕГРЮЛ</p>
+            <h3 className="font-bold text-slate-900 mb-2">1. Введите реквизиты</h3>
+            <p className="text-sm text-slate-500 font-medium">ИНН → данные заполнятся автоматически из ЕГРЮЛ</p>
           </div>
-          <div className="text-center p-4">
-            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Zap className="h-6 w-6 text-green-600" />
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center">
+            <div className="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Zap className="h-7 w-7 text-emerald-600" />
             </div>
-            <h3 className="font-semibold mb-1">2. Добавьте позиции</h3>
-            <p className="text-sm text-gray-500">Товары/услуги, цены, НДС — всё рассчитается</p>
+            <h3 className="font-bold text-slate-900 mb-2">2. Добавьте позиции</h3>
+            <p className="text-sm text-slate-500 font-medium">Товары/услуги, цены, НДС — всё рассчитается</p>
           </div>
-          <div className="text-center p-4">
-            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Shield className="h-6 w-6 text-purple-600" />
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center">
+            <div className="w-14 h-14 bg-violet-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Shield className="h-7 w-7 text-violet-600" />
             </div>
-            <h3 className="font-semibold mb-1">3. Скачайте PDF</h3>
-            <p className="text-sm text-gray-500">Готовый счёт с подписями, печатью, QR-кодом</p>
+            <h3 className="font-bold text-slate-900 mb-2">3. Скачайте PDF</h3>
+            <p className="text-sm text-slate-500 font-medium">Готовый счёт с подписями, печатью, QR-кодом</p>
           </div>
         </section>
 
@@ -101,24 +101,28 @@ export default function InvoicePage() {
         </section>
 
         {/* Связанные документы */}
-        <section className="mt-12 bg-gray-50 rounded-xl p-6">
-          <h2 className="text-xl font-semibold mb-4">Создали счёт? Вам могут понадобиться:</h2>
+        <section className="mt-14 bg-white border border-slate-200 rounded-3xl p-8">
+          <h2 className="text-xl font-bold text-slate-900 mb-6">Создали счёт? Вам могут понадобиться:</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Link href="/akt" className="flex items-center gap-3 p-4 bg-white rounded-lg border hover:border-blue-300 transition-colors">
-              <FileText className="h-8 w-8 text-blue-500" />
-              <div>
-                <div className="font-medium">Акт выполненных работ</div>
-                <div className="text-sm text-gray-500">Закрывающий документ к счёту</div>
+            <Link href="/akt" className="flex items-center gap-4 p-5 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-colors group">
+              <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                <FileText className="h-6 w-6 text-emerald-600" />
               </div>
-              <ArrowRight className="h-5 w-5 text-gray-400 ml-auto" />
+              <div className="flex-1">
+                <div className="font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">Акт выполненных работ</div>
+                <div className="text-sm text-slate-500 font-medium">Закрывающий документ к счёту</div>
+              </div>
+              <ArrowRight className="h-5 w-5 text-slate-400 group-hover:text-emerald-500 transition-colors" />
             </Link>
-            <Link href="/dogovor" className="flex items-center gap-3 p-4 bg-white rounded-lg border hover:border-blue-300 transition-colors">
-              <FileText className="h-8 w-8 text-green-500" />
-              <div>
-                <div className="font-medium">Договор оказания услуг</div>
-                <div className="text-sm text-gray-500">Оформите отношения с контрагентом</div>
+            <Link href="/dogovor" className="flex items-center gap-4 p-5 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-colors group">
+              <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center">
+                <FileText className="h-6 w-6 text-violet-600" />
               </div>
-              <ArrowRight className="h-5 w-5 text-gray-400 ml-auto" />
+              <div className="flex-1">
+                <div className="font-bold text-slate-900 group-hover:text-violet-600 transition-colors">Договор оказания услуг</div>
+                <div className="text-sm text-slate-500 font-medium">Оформите отношения с контрагентом</div>
+              </div>
+              <ArrowRight className="h-5 w-5 text-slate-400 group-hover:text-violet-500 transition-colors" />
             </Link>
           </div>
         </section>
@@ -127,7 +131,7 @@ export default function InvoicePage() {
         <PricingBanner />
 
         {/* SEO-текст */}
-        <section className="mt-12 prose prose-gray max-w-none">
+        <section className="mt-14 prose max-w-none">
           <h2>Что такое счёт на оплату и когда он нужен</h2>
           <p>
             Счёт на оплату — это документ, который продавец (поставщик) направляет покупателю с просьбой оплатить товары или услуги.
@@ -172,16 +176,16 @@ export default function InvoicePage() {
         </section>
 
         {/* FAQ */}
-        <section className="mt-12">
-          <h2 className="text-2xl font-bold mb-6">Частые вопросы</h2>
+        <section className="mt-14">
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-8">Частые вопросы</h2>
           <div className="space-y-4">
             {faqItems.map((item, i) => (
-              <details key={i} className="group border rounded-lg">
-                <summary className="flex items-center justify-between p-4 cursor-pointer font-medium hover:bg-gray-50">
+              <details key={i} className="group bg-white border border-slate-200 rounded-2xl overflow-hidden">
+                <summary className="flex items-center justify-between p-5 cursor-pointer font-bold text-slate-900 hover:bg-slate-50 transition-colors">
                   {item.question}
-                  <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+                  <span className="text-slate-400 group-open:rotate-180 transition-transform ml-4">▼</span>
                 </summary>
-                <div className="px-4 pb-4 text-gray-600">
+                <div className="px-5 pb-5 text-slate-500 font-medium leading-relaxed">
                   {item.answer}
                 </div>
               </details>

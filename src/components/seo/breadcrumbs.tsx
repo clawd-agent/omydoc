@@ -17,18 +17,18 @@ export function Breadcrumbs({ items }: { items: BreadcrumbItem[] }) {
   return (
     <>
       <BreadcrumbSchema items={schemaItems} />
-      <nav aria-label="Хлебные крошки" className="flex items-center gap-1 text-sm text-gray-500 mb-6">
-        <Link href="/" className="hover:text-gray-700 flex items-center gap-1">
+      <nav aria-label="Хлебные крошки" className="flex items-center gap-1.5 text-sm text-slate-500 font-medium mb-8">
+        <Link href="/" className="hover:text-slate-900 flex items-center gap-1 transition-colors">
           <Home className="h-3.5 w-3.5" />
           Главная
         </Link>
         {items.map((item, i) => (
-          <span key={i} className="flex items-center gap-1">
-            <ChevronRight className="h-3.5 w-3.5" />
+          <span key={i} className="flex items-center gap-1.5">
+            <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
             {i === items.length - 1 ? (
-              <span className="text-gray-900 font-medium">{item.name}</span>
+              <span className="text-slate-900 font-bold">{item.name}</span>
             ) : (
-              <Link href={item.href} className="hover:text-gray-700">{item.name}</Link>
+              <Link href={item.href} className="hover:text-slate-900 transition-colors">{item.name}</Link>
             )}
           </span>
         ))}

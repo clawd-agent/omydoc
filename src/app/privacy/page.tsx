@@ -11,9 +11,9 @@ export default function PrivacyPage() {
     <div className="max-w-3xl mx-auto px-4 py-8">
       <Breadcrumbs items={[{ name: 'Конфиденциальность', href: '/privacy' }]} />
 
-      <article className="prose prose-gray max-w-none">
+      <article className="prose prose max-w-none">
         <h1>Политика конфиденциальности</h1>
-        <p className="text-gray-500">Последнее обновление: 5 февраля 2026 г.</p>
+        <p className="text-slate-500">Последнее обновление: 5 февраля 2026 г.</p>
 
         <h2>1. Общие положения</h2>
         <p>

@@ -12,12 +12,12 @@ export default function ContactsPage() {
     <div className="max-w-3xl mx-auto px-4 py-8">
       <Breadcrumbs items={[{ name: 'Контакты', href: '/contacts' }]} />
 
-      <h1 className="text-3xl font-bold mb-8">Контакты</h1>
+      <h1 className="text-3xl font-black mb-8">Контакты</h1>
 
       <div className="space-y-6">
         <div className="border rounded-lg p-6">
           <h2 className="text-xl font-semibold mb-4">Обратная связь</h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-slate-500 mb-6">
             Если у вас есть вопросы, предложения или вы нашли ошибку — напишите нам.
             Мы отвечаем в течение 24 часов.
           </p>
@@ -28,7 +28,7 @@ export default function ContactsPage() {
                 <Mail className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <div className="text-sm text-gray-500">Email</div>
+                <div className="text-sm text-slate-500">Email</div>
                 <a href="mailto:support@docgen.ru" className="text-blue-600 hover:underline font-medium">
                   support@docgen.ru
                 </a>
@@ -40,7 +40,7 @@ export default function ContactsPage() {
                 <MessageCircle className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <div className="text-sm text-gray-500">Telegram</div>
+                <div className="text-sm text-slate-500">Telegram</div>
                 <a href="https://t.me/docgen_support" className="text-blue-600 hover:underline font-medium">
                   @docgen_support
                 </a>
@@ -51,7 +51,7 @@ export default function ContactsPage() {
 
         <div className="border rounded-lg p-6">
           <h2 className="text-xl font-semibold mb-4">О сервисе</h2>
-          <p className="text-gray-600">
+          <p className="text-slate-500">
             OmyDoc — бесплатный онлайн-генератор бизнес-документов для малого бизнеса.
             Счета, акты, договоры — за 2 минуты, без регистрации.
           </p>

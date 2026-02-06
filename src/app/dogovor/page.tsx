@@ -52,41 +52,41 @@ export default function ContractPage() {
       <FAQSchema items={faqItems} />
       <HowToSchema name="Как создать договор оказания услуг онлайн" steps={howToSteps} />
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 py-10">
         <Breadcrumbs items={[{ name: 'Договор оказания услуг', href: '/dogovor' }]} />
 
-        <header className="text-center mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Создать договор оказания услуг онлайн
+        <header className="text-center mb-12">
+          <h1 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight mb-5">
+            Создать договор оказания услуг
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-slate-500 font-medium max-w-2xl mx-auto leading-relaxed">
             Заполните данные — получите юридически грамотный договор в PDF.
-            Настраиваемые условия, авто-заполнение реквизитов по ИНН. Бесплатно.
+            Настраиваемые условия, авто-заполнение реквизитов по ИНН.
           </p>
         </header>
 
         {/* Как это работает */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-          <div className="text-center p-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <FileText className="h-6 w-6 text-blue-600" />
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center">
+            <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <FileText className="h-7 w-7 text-blue-600" />
             </div>
-            <h3 className="font-semibold mb-1">1. Укажите стороны</h3>
-            <p className="text-sm text-gray-500">ИНН → все реквизиты из ЕГРЮЛ</p>
+            <h3 className="font-bold text-slate-900 mb-2">1. Укажите стороны</h3>
+            <p className="text-sm text-slate-500 font-medium">ИНН → все реквизиты из ЕГРЮЛ</p>
           </div>
-          <div className="text-center p-4">
-            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Scale className="h-6 w-6 text-green-600" />
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center">
+            <div className="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Scale className="h-7 w-7 text-emerald-600" />
             </div>
-            <h3 className="font-semibold mb-1">2. Настройте условия</h3>
-            <p className="text-sm text-gray-500">Предмет, сроки, оплата, ответственность</p>
+            <h3 className="font-bold text-slate-900 mb-2">2. Настройте условия</h3>
+            <p className="text-sm text-slate-500 font-medium">Предмет, сроки, оплата, ответственность</p>
           </div>
-          <div className="text-center p-4">
-            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Zap className="h-6 w-6 text-purple-600" />
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center">
+            <div className="w-14 h-14 bg-violet-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Zap className="h-7 w-7 text-violet-600" />
             </div>
-            <h3 className="font-semibold mb-1">3. Скачайте PDF</h3>
-            <p className="text-sm text-gray-500">Готовый договор с реквизитами</p>
+            <h3 className="font-bold text-slate-900 mb-2">3. Скачайте PDF</h3>
+            <p className="text-sm text-slate-500 font-medium">Готовый договор с реквизитами</p>
           </div>
         </section>
 
@@ -95,24 +95,28 @@ export default function ContractPage() {
         </section>
 
         {/* Связанные документы */}
-        <section className="mt-12 bg-gray-50 rounded-xl p-6">
-          <h2 className="text-xl font-semibold mb-4">К договору вам понадобятся:</h2>
+        <section className="mt-14 bg-white border border-slate-200 rounded-3xl p-8">
+          <h2 className="text-xl font-bold text-slate-900 mb-6">К договору вам понадобятся:</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Link href="/schet" className="flex items-center gap-3 p-4 bg-white rounded-lg border hover:border-blue-300 transition-colors">
-              <FileText className="h-8 w-8 text-blue-500" />
-              <div>
-                <div className="font-medium">Счёт на оплату</div>
-                <div className="text-sm text-gray-500">Выставить счёт по договору</div>
+            <Link href="/schet" className="flex items-center gap-4 p-5 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-colors group">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                <FileText className="h-6 w-6 text-blue-600" />
               </div>
-              <ArrowRight className="h-5 w-5 text-gray-400 ml-auto" />
+              <div className="flex-1">
+                <div className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors">Счёт на оплату</div>
+                <div className="text-sm text-slate-500 font-medium">Выставить счёт по договору</div>
+              </div>
+              <ArrowRight className="h-5 w-5 text-slate-400 group-hover:text-blue-500 transition-colors" />
             </Link>
-            <Link href="/akt" className="flex items-center gap-3 p-4 bg-white rounded-lg border hover:border-blue-300 transition-colors">
-              <FileText className="h-8 w-8 text-orange-500" />
-              <div>
-                <div className="font-medium">Акт выполненных работ</div>
-                <div className="text-sm text-gray-500">Закрыть работы по договору</div>
+            <Link href="/akt" className="flex items-center gap-4 p-5 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-colors group">
+              <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                <FileText className="h-6 w-6 text-emerald-600" />
               </div>
-              <ArrowRight className="h-5 w-5 text-gray-400 ml-auto" />
+              <div className="flex-1">
+                <div className="font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">Акт выполненных работ</div>
+                <div className="text-sm text-slate-500 font-medium">Закрыть работы по договору</div>
+              </div>
+              <ArrowRight className="h-5 w-5 text-slate-400 group-hover:text-emerald-500 transition-colors" />
             </Link>
           </div>
         </section>
@@ -120,7 +124,7 @@ export default function ContractPage() {
         <PricingBanner />
 
         {/* SEO-контент */}
-        <section className="mt-12 prose prose-gray max-w-none">
+        <section className="mt-14 prose max-w-none">
           <h2>Договор оказания услуг: правовые основы</h2>
           <p>
             Договор возмездного оказания услуг регулируется главой 39 ГК РФ (статьи 779-783).
@@ -153,16 +157,16 @@ export default function ContractPage() {
         </section>
 
         {/* FAQ */}
-        <section className="mt-12">
-          <h2 className="text-2xl font-bold mb-6">Частые вопросы</h2>
+        <section className="mt-14">
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-8">Частые вопросы</h2>
           <div className="space-y-4">
             {faqItems.map((item, i) => (
-              <details key={i} className="group border rounded-lg">
-                <summary className="flex items-center justify-between p-4 cursor-pointer font-medium hover:bg-gray-50">
+              <details key={i} className="group bg-white border border-slate-200 rounded-2xl overflow-hidden">
+                <summary className="flex items-center justify-between p-5 cursor-pointer font-bold text-slate-900 hover:bg-slate-50 transition-colors">
                   {item.question}
-                  <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+                  <span className="text-slate-400 group-open:rotate-180 transition-transform ml-4">▼</span>
                 </summary>
-                <div className="px-4 pb-4 text-gray-600">{item.answer}</div>
+                <div className="px-5 pb-5 text-slate-500 font-medium leading-relaxed">{item.answer}</div>
               </details>
             ))}
           </div>
