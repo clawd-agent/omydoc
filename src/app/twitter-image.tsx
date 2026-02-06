@@ -10,7 +10,7 @@ export default async function Image() {
     (
       <div
         style={{
-          background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%)',
+          background: 'linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 50%, #F8FAFC 100%)',
           width: '100%',
           height: '100%',
           display: 'flex',
@@ -20,38 +20,38 @@ export default async function Image() {
           padding: '60px',
         }}
       >
-        {/* Logo and title */}
+        {/* Logo */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '20px',
+            gap: '16px',
             marginBottom: '40px',
           }}
         >
           <div
             style={{
-              width: '80px',
-              height: '80px',
-              background: 'white',
-              borderRadius: '20px',
+              width: '64px',
+              height: '64px',
+              background: '#2563EB',
+              borderRadius: '16px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
             <svg
-              width="48"
-              height="48"
+              width="36"
+              height="36"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#2563eb"
-              strokeWidth="2"
+              stroke="white"
+              strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
-              <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+              <path d="M14 2v4a2 2 0 0 0 2 2h4" />
               <path d="M10 9H8" />
               <path d="M16 13H8" />
               <path d="M16 17H8" />
@@ -59,9 +59,10 @@ export default async function Image() {
           </div>
           <span
             style={{
-              fontSize: '64px',
-              fontWeight: 'bold',
-              color: 'white',
+              fontSize: '48px',
+              fontWeight: 900,
+              color: '#0F172A',
+              letterSpacing: '-0.03em',
             }}
           >
             OmyDoc
@@ -71,50 +72,105 @@ export default async function Image() {
         {/* Tagline */}
         <div
           style={{
-            fontSize: '42px',
-            color: 'white',
-            textAlign: 'center',
-            lineHeight: 1.3,
-            maxWidth: '900px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            marginBottom: '24px',
           }}
         >
-          Генератор документов для бизнеса
+          <span
+            style={{
+              fontSize: '56px',
+              fontWeight: 900,
+              color: '#0F172A',
+              textAlign: 'center',
+              lineHeight: 1.1,
+              letterSpacing: '-0.03em',
+            }}
+          >
+            Бизнес-документы
+          </span>
+          <span
+            style={{
+              fontSize: '56px',
+              fontWeight: 900,
+              background: 'linear-gradient(135deg, #2563EB, #8B5CF6)',
+              backgroundClip: 'text',
+              color: 'transparent',
+              lineHeight: 1.1,
+              letterSpacing: '-0.03em',
+            }}
+          >
+            за 2 минуты
+          </span>
         </div>
 
         {/* Features */}
         <div
           style={{
             display: 'flex',
-            gap: '40px',
-            marginTop: '50px',
+            gap: '16px',
+            marginTop: '20px',
           }}
         >
-          {['Счета', 'Акты', 'Договоры'].map((item) => (
-            <div
-              key={item}
-              style={{
-                background: 'rgba(255, 255, 255, 0.2)',
-                padding: '16px 32px',
-                borderRadius: '12px',
-                fontSize: '28px',
-                color: 'white',
-              }}
-            >
-              {item}
-            </div>
-          ))}
+          <div
+            style={{
+              background: 'white',
+              border: '2px solid #E2E8F0',
+              padding: '14px 28px',
+              borderRadius: '16px',
+              fontSize: '22px',
+              fontWeight: 700,
+              color: '#334155',
+              display: 'flex',
+            }}
+          >
+            Счета
+          </div>
+          <div
+            style={{
+              background: 'white',
+              border: '2px solid #E2E8F0',
+              padding: '14px 28px',
+              borderRadius: '16px',
+              fontSize: '22px',
+              fontWeight: 700,
+              color: '#334155',
+              display: 'flex',
+            }}
+          >
+            Акты
+          </div>
+          <div
+            style={{
+              background: 'white',
+              border: '2px solid #E2E8F0',
+              padding: '14px 28px',
+              borderRadius: '16px',
+              fontSize: '22px',
+              fontWeight: 700,
+              color: '#334155',
+              display: 'flex',
+            }}
+          >
+            Договоры
+          </div>
         </div>
 
         {/* Bottom text */}
         <div
           style={{
-            position: 'absolute',
-            bottom: '40px',
-            fontSize: '24px',
-            color: 'rgba(255, 255, 255, 0.8)',
+            display: 'flex',
+            gap: '24px',
+            fontSize: '20px',
+            fontWeight: 600,
+            color: '#64748B',
+            marginTop: '48px',
           }}
         >
-          omydoc.ru • Бесплатно • Без регистрации
+          <span style={{ display: 'flex' }}>✓ Бесплатно</span>
+          <span style={{ display: 'flex' }}>✓ Без регистрации</span>
+          <span style={{ display: 'flex' }}>✓ Авто-заполнение по ИНН</span>
         </div>
       </div>
     ),

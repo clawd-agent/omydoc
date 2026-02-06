@@ -10,7 +10,7 @@ export default async function Image() {
     (
       <div
         style={{
-          background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+          background: 'linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%)',
           width: '100%',
           height: '100%',
           display: 'flex',
@@ -20,95 +20,157 @@ export default async function Image() {
           padding: '60px',
         }}
       >
+        {/* Icon */}
         <div
           style={{
             width: '100px',
             height: '100px',
-            background: 'white',
-            borderRadius: '24px',
+            background: '#2563EB',
+            borderRadius: '28px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginBottom: '30px',
+            marginBottom: '32px',
+            boxShadow: '0 20px 40px -10px rgba(37, 99, 235, 0.3)',
           }}
         >
           <svg
-            width="56"
-            height="56"
+            width="52"
+            height="52"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="#2563eb"
-            strokeWidth="2"
+            stroke="white"
+            strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
           >
-            <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
-            <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+            <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+            <path d="M14 2v4a2 2 0 0 0 2 2h4" />
             <path d="M10 9H8" />
             <path d="M16 13H8" />
             <path d="M16 17H8" />
           </svg>
         </div>
 
+        {/* Title */}
         <div
           style={{
-            fontSize: '56px',
-            fontWeight: 'bold',
-            color: 'white',
+            fontSize: '52px',
+            fontWeight: 900,
+            color: '#0F172A',
             textAlign: 'center',
-            marginBottom: '20px',
+            letterSpacing: '-0.03em',
+            marginBottom: '16px',
+            display: 'flex',
           }}
         >
           Счёт на оплату
         </div>
 
+        {/* Subtitle */}
         <div
           style={{
-            fontSize: '32px',
-            color: 'rgba(255, 255, 255, 0.9)',
+            fontSize: '28px',
+            fontWeight: 600,
+            color: '#64748B',
             textAlign: 'center',
-            maxWidth: '800px',
+            marginBottom: '32px',
+            display: 'flex',
           }}
         >
           Создайте бесплатно за 2 минуты
         </div>
 
+        {/* Features */}
         <div
           style={{
             display: 'flex',
-            gap: '20px',
-            marginTop: '40px',
+            gap: '16px',
           }}
         >
-          {['Авто-заполнение по ИНН', 'НДС 0/5/7/10/20%', 'PDF'].map((item) => (
-            <div
-              key={item}
-              style={{
-                background: 'rgba(255, 255, 255, 0.2)',
-                padding: '12px 24px',
-                borderRadius: '8px',
-                fontSize: '22px',
-                color: 'white',
-              }}
-            >
-              {item}
-            </div>
-          ))}
+          <div
+            style={{
+              background: '#EFF6FF',
+              padding: '12px 24px',
+              borderRadius: '12px',
+              fontSize: '18px',
+              fontWeight: 600,
+              color: '#2563EB',
+              display: 'flex',
+            }}
+          >
+            Авто-заполнение по ИНН
+          </div>
+          <div
+            style={{
+              background: '#EFF6FF',
+              padding: '12px 24px',
+              borderRadius: '12px',
+              fontSize: '18px',
+              fontWeight: 600,
+              color: '#2563EB',
+              display: 'flex',
+            }}
+          >
+            НДС 0/5/7/10/20%
+          </div>
+          <div
+            style={{
+              background: '#EFF6FF',
+              padding: '12px 24px',
+              borderRadius: '12px',
+              fontSize: '18px',
+              fontWeight: 600,
+              color: '#2563EB',
+              display: 'flex',
+            }}
+          >
+            PDF
+          </div>
         </div>
 
+        {/* Logo */}
         <div
           style={{
-            position: 'absolute',
-            bottom: '40px',
             display: 'flex',
             alignItems: 'center',
-            gap: '12px',
-            fontSize: '28px',
-            color: 'white',
-            fontWeight: 'bold',
+            gap: '10px',
+            marginTop: '48px',
           }}
         >
-          OmyDoc
+          <div
+            style={{
+              width: '32px',
+              height: '32px',
+              background: '#2563EB',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="2.5"
+            >
+              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+              <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+            </svg>
+          </div>
+          <span
+            style={{
+              fontSize: '24px',
+              fontWeight: 900,
+              color: '#0F172A',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            OmyDoc
+          </span>
         </div>
       </div>
     ),
