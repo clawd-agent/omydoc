@@ -5,8 +5,8 @@ import { CheckCircle2, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Тарифы — OMyDoc',
-  description: 'Тарифы генератора документов OMyDoc: бесплатный план до 5 документов, Pro за 650₽/мес — безлимит, Business за 1500₽/мес — для команд.',
+  title: 'Тарифы — OmyDoc',
+  description: 'Тарифы генератора документов OmyDoc: бесплатный план до 5 документов, Pro за 650₽/мес — безлимит, Business за 1500₽/мес — для команд.',
 }
 
 const plans = [

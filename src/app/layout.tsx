@@ -20,17 +20,17 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "OMyDoc — Генератор документов для бизнеса",
-    template: "%s | OMyDoc",
+    default: "OmyDoc — Генератор документов для бизнеса",
+    template: "%s | OmyDoc",
   },
   description: "Бесплатный онлайн-генератор бизнес-документов: счета на оплату, акты выполненных работ, договоры. Авто-заполнение по ИНН. Скачайте PDF за 2 минуты.",
   keywords: "генератор документов, счёт на оплату онлайн, акт выполненных работ, договор оказания услуг, создать счёт бесплатно",
-  authors: [{ name: "OMyDoc" }],
+  authors: [{ name: "OmyDoc" }],
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://omydoc.ru"),
   openGraph: {
     type: "website",
     locale: "ru_RU",
-    siteName: "OMyDoc",
+    siteName: "OmyDoc",
   },
   robots: {
     index: true,

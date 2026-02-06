@@ -57,7 +57,7 @@ export function WebApplicationSchema() {
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
-    name: 'OMyDoc — Генератор документов для бизнеса',
+    name: 'OmyDoc — Генератор документов для бизнеса',
     description: 'Бесплатный онлайн-генератор бизнес-документов: счета, акты, договоры. Авто-заполнение по ИНН.',
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web',
@@ -101,7 +101,7 @@ export function OrganizationSchema() {
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'OMyDoc',
+    name: 'OmyDoc',
     url: process.env.NEXT_PUBLIC_SITE_URL || 'https://omydoc.ru',
     description: 'Онлайн-генератор бизнес-документов для малого бизнеса',
     contactPoint: {

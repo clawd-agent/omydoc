@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import { Breadcrumbs } from '@/components/seo/breadcrumbs'
 
 export const metadata: Metadata = {
-  title: 'Политика конфиденциальности — OMyDoc',
-  description: 'Политика обработки персональных данных сервиса OMyDoc.',
+  title: 'Политика конфиденциальности — OmyDoc',
+  description: 'Политика обработки персональных данных сервиса OmyDoc.',
 }
 
 export default function PrivacyPage() {
@@ -18,7 +18,7 @@ export default function PrivacyPage() {
         <h2>1. Общие положения</h2>
         <p>
           Настоящая Политика конфиденциальности (далее — «Политика») определяет порядок обработки
-          и защиты персональных данных пользователей сервиса OMyDoc (далее — «Сервис»),
+          и защиты персональных данных пользователей сервиса OmyDoc (далее — «Сервис»),
           расположенного в сети Интернет по адресу docgen.ru.
         </p>
 

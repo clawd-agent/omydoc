@@ -3,8 +3,8 @@ import { Breadcrumbs } from '@/components/seo/breadcrumbs'
 import { Mail, MessageCircle } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Контакты — OMyDoc',
-  description: 'Свяжитесь с нами: email, Telegram. Генератор бизнес-документов OMyDoc.',
+  title: 'Контакты — OmyDoc',
+  description: 'Свяжитесь с нами: email, Telegram. Генератор бизнес-документов OmyDoc.',
 }
 
 export default function ContactsPage() {
@@ -52,7 +52,7 @@ export default function ContactsPage() {
         <div className="border rounded-lg p-6">
           <h2 className="text-xl font-semibold mb-4">О сервисе</h2>
           <p className="text-gray-600">
-            OMyDoc — бесплатный онлайн-генератор бизнес-документов для малого бизнеса.
+            OmyDoc — бесплатный онлайн-генератор бизнес-документов для малого бизнеса.
             Счета, акты, договоры — за 2 минуты, без регистрации.
           </p>
         </div>

@@ -9,7 +9,7 @@ export function Header() {
           <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center">
             <FileText className="h-4.5 w-4.5 text-white" />
           </div>
-          <span className="text-slate-900">OMyDoc</span>
+          <span className="text-slate-900">OmyDoc</span>
         </Link>
 
         <nav className="hidden sm:flex items-center gap-1">

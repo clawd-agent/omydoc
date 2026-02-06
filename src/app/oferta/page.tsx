@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import { Breadcrumbs } from '@/components/seo/breadcrumbs'
 
 export const metadata: Metadata = {
-  title: 'Публичная оферта — OMyDoc',
-  description: 'Договор-оферта на оказание услуг сервиса OMyDoc — генератора бизнес-документов.',
+  title: 'Публичная оферта — OmyDoc',
+  description: 'Договор-оферта на оказание услуг сервиса OmyDoc — генератора бизнес-документов.',
 }
 
 export default function OfertaPage() {
@@ -17,7 +17,7 @@ export default function OfertaPage() {
 
         <h2>1. Общие положения</h2>
         <p>
-          Настоящий документ является официальным предложением (публичной офертой) сервиса OMyDoc
+          Настоящий документ является официальным предложением (публичной офертой) сервиса OmyDoc
           (далее — «Сервис») и содержит все существенные условия предоставления услуг по генерации
           бизнес-документов.
         </p>

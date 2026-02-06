@@ -14,7 +14,7 @@ export function Footer() {
               <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center">
                 <FileText className="h-4 w-4 text-white" />
               </div>
-              <span className="text-slate-900">OMyDoc</span>
+              <span className="text-slate-900">OmyDoc</span>
             </Link>
             <p className="text-sm text-slate-500 font-medium leading-relaxed">
               Бесплатный онлайн-генератор бизнес-документов для малого бизнеса
@@ -54,7 +54,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-slate-200 mt-10 pt-8 text-center text-sm text-slate-400 font-medium">
-          © {currentYear} OMyDoc. Бесплатный генератор документов для бизнеса.
+          © {currentYear} OmyDoc. Бесплатный генератор документов для бизнеса.
         </div>
       </div>
     </footer>
