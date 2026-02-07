@@ -1,18 +1,18 @@
 import type { Metadata } from 'next'
-import { InvoiceForm } from '@/components/forms/invoice-form'
 import { Breadcrumbs } from '@/components/seo/breadcrumbs'
 import { FAQSchema, HowToSchema } from '@/components/seo/json-ld'
-import { FileText, Zap, Shield, ArrowRight, CheckCircle2 } from 'lucide-react'
+import { FileText, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { PricingBanner } from '@/components/layout/pricing-banner'
+import { InvoiceGenerator } from './invoice-generator'
 
 export const metadata: Metadata = {
   title: 'Создать счёт на оплату онлайн бесплатно — Генератор счетов',
-  description: 'Бесплатный онлайн-генератор счетов на оплату. Заполните реквизиты — скачайте PDF за 2 минуты. Авто-заполнение по ИНН. Без регистрации.',
+  description: 'Бесплатный онлайн-генератор счетов на оплату. Опишите что нужно — AI заполнит форму за 30 секунд. Скачайте PDF. Без регистрации.',
   keywords: 'счёт на оплату, выставить счёт, генератор счетов, счёт онлайн, счёт на оплату образец, создать счёт бесплатно',
   openGraph: {
-    title: 'Создать счёт на оплату онлайн бесплатно',
-    description: 'Заполните реквизиты — скачайте готовый счёт в PDF за 2 минуты. Бесплатно, без регистрации.',
+    title: 'Создать счёт на оплату онлайн — 30 секунд',
+    description: 'Опишите что нужно — AI заполнит форму. Скачайте готовый PDF. Бесплатно, без регистрации.',
     type: 'website',
   },
 }
@@ -45,8 +45,8 @@ const faqItems = [
 ]
 
 const howToSteps = [
-  { name: 'Введите реквизиты', text: 'Укажите ИНН поставщика и покупателя. Данные компании заполнятся автоматически из ЕГРЮЛ.' },
-  { name: 'Добавьте товары/услуги', text: 'Заполните таблицу: наименование, количество, цена. НДС рассчитается автоматически.' },
+  { name: 'Опишите счёт', text: 'Напишите своими словами: кто, кому, за что, сколько. AI распарсит текст.' },
+  { name: 'Проверьте данные', text: 'AI заполнит форму. Проверьте реквизиты, при необходимости скорректируйте.' },
   { name: 'Скачайте PDF', text: 'Нажмите кнопку — получите готовый счёт на оплату в формате PDF.' },
 ]
 
@@ -59,46 +59,8 @@ export default function InvoicePage() {
       <div className="max-w-4xl mx-auto px-4 py-10">
         <Breadcrumbs items={[{ name: 'Счёт на оплату', href: '/schet' }]} />
 
-        {/* H1 + подзаголовок */}
-        <header className="text-center mb-12">
-          <h1 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight mb-5">
-            Создать счёт на оплату
-          </h1>
-          <p className="text-lg md:text-xl text-slate-500 font-medium max-w-2xl mx-auto leading-relaxed">
-            Заполните реквизиты — скачайте готовый PDF за 2 минуты.
-            Авто-заполнение по ИНН, расчёт НДС, сумма прописью.
-          </p>
-        </header>
-
-        {/* Как это работает */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center">
-            <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <FileText className="h-7 w-7 text-blue-600" />
-            </div>
-            <h3 className="font-bold text-slate-900 mb-2">1. Введите реквизиты</h3>
-            <p className="text-sm text-slate-500 font-medium">ИНН → данные заполнятся автоматически из ЕГРЮЛ</p>
-          </div>
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center">
-            <div className="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Zap className="h-7 w-7 text-emerald-600" />
-            </div>
-            <h3 className="font-bold text-slate-900 mb-2">2. Добавьте позиции</h3>
-            <p className="text-sm text-slate-500 font-medium">Товары/услуги, цены, НДС — всё рассчитается</p>
-          </div>
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center">
-            <div className="w-14 h-14 bg-violet-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Shield className="h-7 w-7 text-violet-600" />
-            </div>
-            <h3 className="font-bold text-slate-900 mb-2">3. Скачайте PDF</h3>
-            <p className="text-sm text-slate-500 font-medium">Готовый счёт с подписями, печатью, QR-кодом</p>
-          </div>
-        </section>
-
-        {/* Форма генерации */}
-        <section id="generator">
-          <InvoiceForm />
-        </section>
+        {/* Hero + AI Generator */}
+        <InvoiceGenerator />
 
         {/* Связанные документы */}
         <section className="mt-14 bg-white border border-slate-200 rounded-3xl p-8">
