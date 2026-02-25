@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+
+export const runtime = 'nodejs'
+export const maxDuration = 30
 import { renderToBuffer } from '@react-pdf/renderer'
 import React from 'react'
 import { InvoicePDF } from '@/lib/pdf/invoice-pdf'

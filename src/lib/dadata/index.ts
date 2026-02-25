@@ -1,5 +1,4 @@
 import type { DaDataCompany, DaDataBank, CompanyInfo } from '@/types'
-import { writeFileSync } from 'fs'
 
 const DADATA_BASE = 'https://suggestions.dadata.ru/suggestions/api/4_1/rs'
 
@@ -47,18 +46,12 @@ export function dadataToCompanyInfo(company: DaDataCompany): Partial<CompanyInfo
   const d = company.data
   const isIP = d.type === 'INDIVIDUAL'
   
-  // DEBUG: Write to file
   const rawShort = d.name?.short_with_opf
   const rawFull = d.name?.full_with_opf
-  try {
-    writeFileSync('/tmp/dadata-debug.log', JSON.stringify({ rawShort, rawFull, nameObj: d.name }, null, 2))
-  } catch (e) { /* ignore */ }
-  
+
   // Priority: short_with_opf > full_with_opf > full > short
   // short_with_opf is most reliable (e.g. "ПАО СБЕРБАНК", "ООО РОМАШКА")
   const name = rawShort || rawFull || d.name?.full || d.name?.short || ''
-  
-  console.log('DaData name resolved:', name, 'rawShort was:', rawShort)
 
   return {
     name,
