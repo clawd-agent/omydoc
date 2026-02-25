@@ -1,37 +1,37 @@
+# syntax=docker/dockerfile:1.7
+
 FROM node:22-alpine AS base
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
 
-# Зависимости
+# 1) Install production + build deps with cache
 FROM base AS deps
-WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --only=production
+RUN --mount=type=cache,target=/root/.npm npm ci
 
-# Сборка
+# 2) Build Next.js standalone output
 FROM base AS builder
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
 
-# Production
-FROM base AS runner
+# 3) Runtime image for serverless containers (Cloud Run/Fly/Render)
+FROM node:22-alpine AS runner
 WORKDIR /app
-
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN addgroup -S nodejs -g 1001 && adduser -S nextjs -u 1001 -G nodejs
 
-COPY --from=builder /app/public ./public
+# Standalone runtime files
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
-
 EXPOSE 3000
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "server.js"]
+# IMPORTANT: serverless platforms pass PORT dynamically
+CMD ["sh", "-c", "node server.js -p ${PORT:-3000}"]
