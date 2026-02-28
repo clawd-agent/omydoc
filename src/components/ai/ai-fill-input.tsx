@@ -13,10 +13,19 @@ interface ParsedData {
   notes?: string
 }
 
+interface ParseMeta {
+  parseConfidence?: number
+  usedStrongFallback?: boolean
+  inputTruncated?: boolean
+  warnings?: string[]
+  cacheHit?: boolean
+}
+
 interface AIFillInputProps {
   documentType: 'invoice' | 'act' | 'contract'
-  onFill: (data: ParsedData) => void
+  onFill: (data: ParsedData, meta?: ParseMeta) => void
   placeholder?: string
+  examples?: string[]
 }
 
 const defaultPlaceholders = {
@@ -25,10 +34,11 @@ const defaultPlaceholders = {
   contract: 'Например: Договор на разработку мобильного приложения между ООО Заказчик и ИП Программист на 500000 рублей',
 }
 
-export function AIFillInput({ documentType, onFill, placeholder }: AIFillInputProps) {
+export function AIFillInput({ documentType, onFill, placeholder, examples }: AIFillInputProps) {
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [metaHint, setMetaHint] = useState('')
 
   const handleFill = async () => {
     if (!text.trim()) {
@@ -37,6 +47,7 @@ export function AIFillInput({ documentType, onFill, placeholder }: AIFillInputPr
     }
 
     setError('')
+    setMetaHint('')
     setLoading(true)
 
     try {
@@ -52,7 +63,15 @@ export function AIFillInput({ documentType, onFill, placeholder }: AIFillInputPr
         throw new Error(result.error || 'Ошибка парсинга')
       }
 
-      onFill(result.data)
+      const meta = result.meta as ParseMeta | undefined
+      onFill(result.data, meta)
+
+      const warningText = meta?.warnings?.length ? `Проверьте: ${meta.warnings.join(' · ')}` : ''
+      const quality = typeof meta?.parseConfidence === 'number' ? `Уверенность: ${Math.round(meta.parseConfidence * 100)}%` : ''
+      const source = meta?.cacheHit ? ' (быстрый ответ из кеша)' : ''
+      const fallback = meta?.usedStrongFallback ? ' · включён усиленный разбор' : ''
+      setMetaHint([quality + source, warningText, fallback].filter(Boolean).join(' '))
+
       setText('')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Ошибка AI. Попробуйте ещё раз.')
@@ -82,6 +101,20 @@ export function AIFillInput({ documentType, onFill, placeholder }: AIFillInputPr
         </div>
 
         <div className="space-y-4">
+          {!!examples?.length && (
+            <div className="flex flex-wrap gap-2">
+              {examples.map((example) => (
+                <button
+                  key={example}
+                  type="button"
+                  onClick={() => setText(example)}
+                  className="text-xs px-3 py-1.5 rounded-full bg-white border border-slate-200 hover:border-violet-300 hover:bg-violet-50 text-slate-700"
+                >
+                  {example}
+                </button>
+              ))}
+            </div>
+          )}
           <Textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -94,6 +127,12 @@ export function AIFillInput({ documentType, onFill, placeholder }: AIFillInputPr
           {error && (
             <div className="text-sm text-red-600 font-medium">
               {error}
+            </div>
+          )}
+
+          {metaHint && !error && (
+            <div className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              {metaHint}
             </div>
           )}
 

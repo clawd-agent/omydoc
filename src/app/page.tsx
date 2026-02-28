@@ -1,10 +1,31 @@
 import Link from 'next/link'
 import { FileText, Zap, Shield, Clock, ArrowRight, CheckCircle2, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { FAQSchema } from '@/components/seo/json-ld'
+
+const faqItems = [
+  {
+    question: 'Можно ли создать счёт, акт и договор бесплатно?',
+    answer: 'Да. В OmyDoc можно бесплатно создавать до 5 документов в месяц без регистрации.',
+  },
+  {
+    question: 'Откуда берутся реквизиты по ИНН?',
+    answer: 'Реквизиты подтягиваются автоматически из официальных данных ЕГРЮЛ/ЕГРИП через интеграцию с DaData.',
+  },
+  {
+    question: 'Подходят ли документы для бухгалтерии и оплаты?',
+    answer: 'Да. Формы адаптированы под практику российского малого бизнеса: счёт, акт и договор в PDF.',
+  },
+  {
+    question: 'Нужна ли регистрация для первого документа?',
+    answer: 'Нет. Первый документ можно создать и скачать без регистрации.',
+  },
+]
 
 export default function HomePage() {
   return (
     <>
+      <FAQSchema items={faqItems} />
       {/* Hero - Premium SaaS feel */}
       <section className="relative overflow-hidden py-20 md:py-32">
         {/* Background gradient */}
@@ -159,14 +180,14 @@ export default function HomePage() {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
             {[
-              { icon: Zap, color: 'blue', title: 'Быстро', desc: 'Готовый документ за 2 минуты. Авто-заполнение по ИНН экономит время.' },
-              { icon: Shield, color: 'emerald', title: 'Бесплатно', desc: 'Создавайте до 5 документов в месяц бесплатно. Без скрытых платежей.' },
-              { icon: Clock, color: 'violet', title: 'Без регистрации', desc: 'Первый документ — без регистрации. Просто заполните и скачайте.' },
-              { icon: FileText, color: 'amber', title: 'Корректные', desc: 'Документы соответствуют законодательству РФ. НДС 2025, реквизиты из ЕГРЮЛ.' },
-            ].map(({ icon: Icon, color, title, desc }) => (
+              { icon: Zap, iconWrapClass: 'bg-blue-100', iconClass: 'text-blue-600', title: 'Быстро', desc: 'Готовый документ за 2 минуты. Авто-заполнение по ИНН экономит время.' },
+              { icon: Shield, iconWrapClass: 'bg-emerald-100', iconClass: 'text-emerald-600', title: 'Бесплатно', desc: 'Создавайте до 5 документов в месяц бесплатно. Без скрытых платежей.' },
+              { icon: Clock, iconWrapClass: 'bg-violet-100', iconClass: 'text-violet-600', title: 'Без регистрации', desc: 'Первый документ — без регистрации. Просто заполните и скачайте.' },
+              { icon: FileText, iconWrapClass: 'bg-amber-100', iconClass: 'text-amber-600', title: 'Корректные', desc: 'Документы соответствуют законодательству РФ. НДС 2025, реквизиты из ЕГРЮЛ.' },
+            ].map(({ icon: Icon, iconWrapClass, iconClass, title, desc }) => (
               <div key={title} className="text-center">
-                <div className={`w-14 h-14 bg-${color}-100 rounded-2xl flex items-center justify-center mx-auto mb-4`}>
-                  <Icon className={`h-7 w-7 text-${color}-600`} />
+                <div className={`w-14 h-14 ${iconWrapClass} rounded-2xl flex items-center justify-center mx-auto mb-4`}>
+                  <Icon className={`h-7 w-7 ${iconClass}`} />
                 </div>
                 <h3 className="font-bold text-slate-900 mb-2">{title}</h3>
                 <p className="text-sm text-slate-500 font-medium leading-relaxed">{desc}</p>
@@ -194,6 +215,26 @@ export default function HomePage() {
                 <h3 className="font-bold text-lg text-slate-900 mb-2">{emoji} {title}</h3>
                 <p className="text-slate-500 font-medium leading-relaxed">{desc}</p>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="py-20 bg-slate-50 border-y border-slate-200">
+        <div className="max-w-4xl mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight text-center mb-12">
+            Частые вопросы
+          </h2>
+          <div className="space-y-4">
+            {faqItems.map((item) => (
+              <details key={item.question} className="group bg-white border border-slate-200 rounded-2xl p-6 open:shadow-sm">
+                <summary className="cursor-pointer list-none font-bold text-slate-900 pr-6 relative">
+                  {item.question}
+                  <span className="absolute right-0 top-0 text-slate-400 group-open:rotate-45 transition-transform">+</span>
+                </summary>
+                <p className="mt-3 text-slate-600 font-medium leading-relaxed">{item.answer}</p>
+              </details>
             ))}
           </div>
         </div>

@@ -1,10 +1,12 @@
 import type { Metadata } from 'next'
-import { ActForm } from '@/components/forms/act-form'
+import { ActGenerator } from './act-generator'
 import { Breadcrumbs } from '@/components/seo/breadcrumbs'
 import { FAQSchema, HowToSchema } from '@/components/seo/json-ld'
 import { FileText, ClipboardCheck, Zap, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { PricingBanner } from '@/components/layout/pricing-banner'
+import { PageTracker } from '@/components/analytics/page-tracker'
+import { ExitIntentNudge } from '@/components/analytics/exit-intent-nudge'
 
 export const metadata: Metadata = {
   title: 'Создать акт выполненных работ онлайн бесплатно — Генератор актов',
@@ -49,6 +51,8 @@ const howToSteps = [
 export default function ActPage() {
   return (
     <>
+      <PageTracker page="akt" docType="act" />
+      <ExitIntentNudge docType="act" />
       <FAQSchema items={faqItems} />
       <HowToSchema name="Как создать акт выполненных работ онлайн" steps={howToSteps} />
 
@@ -92,7 +96,7 @@ export default function ActPage() {
 
         {/* Форма */}
         <section id="generator">
-          <ActForm />
+          <ActGenerator />
         </section>
 
         {/* Связанные документы */}

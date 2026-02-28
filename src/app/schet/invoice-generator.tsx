@@ -5,13 +5,29 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Sparkles, Loader2, FileText, Zap, CheckCircle2 } from 'lucide-react'
 import { InvoiceForm, type ParsedInvoiceData } from '@/components/forms/invoice-form'
+import { buildDraftPackageFromInvoiceAI } from '@/lib/documents/bundle'
+import { PackageStepper } from '@/components/layout/package-stepper'
 
 export function InvoiceGenerator() {
+  const [initialState] = useState<{ draft: ParsedInvoiceData | null; fromPackage: boolean }>(() => {
+    if (typeof window === 'undefined') return { draft: null, fromPackage: false }
+    const raw = window.sessionStorage.getItem('omydoc:bundle_invoice_draft')
+    if (!raw) return { draft: null, fromPackage: false }
+
+    try {
+      const parsed = JSON.parse(raw) as ParsedInvoiceData
+      return { draft: parsed, fromPackage: true }
+    } catch {
+      window.sessionStorage.removeItem('omydoc:bundle_invoice_draft')
+      return { draft: null, fromPackage: false }
+    }
+  })
+
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [parsedData, setParsedData] = useState<ParsedInvoiceData | null>(null)
-  const [showForm, setShowForm] = useState(false)
+  const [parsedData, setParsedData] = useState<ParsedInvoiceData | null>(initialState.draft)
+  const [showForm, setShowForm] = useState(Boolean(initialState.draft))
 
   const handleAIParse = async () => {
     if (!text.trim()) {
@@ -46,6 +62,15 @@ export function InvoiceGenerator() {
     }
   }
 
+  const handleCreatePackage = () => {
+    if (!parsedData || typeof window === 'undefined') return
+    const pack = buildDraftPackageFromInvoiceAI(parsedData)
+    window.sessionStorage.setItem('omydoc:bundle_invoice_draft', JSON.stringify(parsedData))
+    window.sessionStorage.setItem('omydoc:bundle_act_draft', JSON.stringify(pack.act))
+    window.sessionStorage.setItem('omydoc:bundle_contract_draft', JSON.stringify(pack.contract))
+    window.location.href = '/dogovor?package=1&step=contract'
+  }
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
       handleAIParse()
@@ -66,6 +91,8 @@ export function InvoiceGenerator() {
           Опишите что нужно — AI заполнит форму. Скачайте готовый PDF.
         </p>
       </header>
+
+      {initialState.fromPackage && <PackageStepper current="invoice" />}
 
       {/* AI Input Card */}
       <section className="bg-gradient-to-br from-violet-50 via-blue-50 to-white border border-violet-200 rounded-3xl p-6 md:p-8">
@@ -150,12 +177,27 @@ export function InvoiceGenerator() {
         {showForm ? (
           <>
             {/* Success indicator */}
-            <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-5 py-4 rounded-xl font-medium flex items-center gap-3 mb-6">
+            <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-5 py-4 rounded-xl font-medium flex items-center gap-3 mb-3">
               <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
               <div>
                 <div className="font-bold">AI заполнил форму</div>
                 <div className="text-sm">Проверьте данные и скачайте PDF</div>
               </div>
+            </div>
+            {initialState.fromPackage && (
+              <div className="bg-blue-50 border border-blue-200 text-blue-700 px-5 py-3 rounded-xl font-medium mb-3">
+                Пакетный режим: после счёта можно перейти к акту.
+              </div>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+              <Button type="button" variant="outline" className="w-full" onClick={handleCreatePackage}>
+                Собрать комплект: договор + акт
+              </Button>
+              {initialState.fromPackage && (
+                <Button type="button" variant="outline" className="w-full" onClick={() => { if (typeof window !== 'undefined') window.location.href = '/akt?package=1&step=act' }}>
+                  Перейти к акту
+                </Button>
+              )}
             </div>
             <InvoiceForm initialData={parsedData || undefined} defaultExpanded={true} />
           </>

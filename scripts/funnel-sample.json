@@ -1,0 +1,12 @@
+{
+  "funnel": {
+    "invoice": {"form_start": 120, "company_filled": 90, "pdf_generated": 65, "pdf_downloaded": 62, "form_abandon": 28, "validation_error": 19},
+    "act": {"form_start": 80, "company_filled": 50, "pdf_generated": 34, "pdf_downloaded": 31, "form_abandon": 24, "validation_error": 17},
+    "contract": {"form_start": 70, "company_filled": 42, "pdf_generated": 21, "pdf_downloaded": 19, "form_abandon": 29, "validation_error": 26}
+  },
+  "validationErrors": {
+    "invoice": {"supplier": 6, "buyer": 7, "items": 6, "subject": 0, "endDate": 0},
+    "act": {"supplier": 4, "buyer": 6, "items": 7, "subject": 0, "endDate": 0},
+    "contract": {"supplier": 5, "buyer": 7, "items": 6, "subject": 5, "endDate": 3}
+  }
+}

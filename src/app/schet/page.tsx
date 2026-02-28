@@ -5,6 +5,8 @@ import { FileText, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { PricingBanner } from '@/components/layout/pricing-banner'
 import { InvoiceGenerator } from './invoice-generator'
+import { PageTracker } from '@/components/analytics/page-tracker'
+import { ExitIntentNudge } from '@/components/analytics/exit-intent-nudge'
 
 export const metadata: Metadata = {
   title: 'Создать счёт на оплату онлайн бесплатно — Генератор счетов',
@@ -53,6 +55,8 @@ const howToSteps = [
 export default function InvoicePage() {
   return (
     <>
+      <PageTracker page="schet" docType="invoice" />
+      <ExitIntentNudge docType="invoice" />
       <FAQSchema items={faqItems} />
       <HowToSchema name="Как создать счёт на оплату онлайн" steps={howToSteps} />
 

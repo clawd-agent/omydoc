@@ -1,10 +1,12 @@
 import type { Metadata } from 'next'
-import { ContractForm } from '@/components/forms/contract-form'
+import { ContractGenerator } from './contract-generator'
 import { Breadcrumbs } from '@/components/seo/breadcrumbs'
 import { FAQSchema, HowToSchema } from '@/components/seo/json-ld'
 import { FileText, Scale, Zap, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { PricingBanner } from '@/components/layout/pricing-banner'
+import { PageTracker } from '@/components/analytics/page-tracker'
+import { ExitIntentNudge } from '@/components/analytics/exit-intent-nudge'
 
 export const metadata: Metadata = {
   title: 'Создать договор оказания услуг онлайн бесплатно — Генератор договоров',
@@ -49,6 +51,8 @@ const howToSteps = [
 export default function ContractPage() {
   return (
     <>
+      <PageTracker page="dogovor" docType="contract" />
+      <ExitIntentNudge docType="contract" />
       <FAQSchema items={faqItems} />
       <HowToSchema name="Как создать договор оказания услуг онлайн" steps={howToSteps} />
 
@@ -91,7 +95,7 @@ export default function ContractPage() {
         </section>
 
         <section id="generator">
-          <ContractForm />
+          <ContractGenerator />
         </section>
 
         {/* Связанные документы */}

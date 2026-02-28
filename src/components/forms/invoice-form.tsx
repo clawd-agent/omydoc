@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,7 +13,10 @@ import { LineItemsTable } from './line-items-table'
 import type { CompanyInfo, LineItem, InvoiceData, VatRate } from '@/types'
 import { calculateLineItem, calculateTotals, formatMoney, generateDocNumber, todayISO, generateId } from '@/lib/documents/calculations'
 import { amountToWords } from '@/lib/documents/number-to-words'
-import { trackPdfGenerated, trackPdfDownloaded, trackGenerationError } from '@/lib/analytics/metrika'
+import { trackPdfGenerated, trackPdfDownloaded, trackGenerationError, trackFormStart, trackCompanyFilled, trackValidationError } from '@/lib/analytics/metrika'
+import { canTrackCompanyFilled } from '@/lib/analytics/funnel'
+import { getInvoiceWizardStatus } from '@/lib/ai/doc-wizard'
+import { buildActDraftFromInvoice } from '@/lib/documents/bundle'
 
 const emptyCompany: CompanyInfo = {
   name: '', inn: '', kpp: '', ogrn: '', address: '',
@@ -33,6 +36,12 @@ interface InvoiceFormProps {
   defaultExpanded?: boolean
 }
 
+const invoiceTemplates = [
+  { label: 'Разработка', itemName: 'Разработка сайта', unit: 'усл', quantity: 1, note: 'Оплата по этапу разработки' },
+  { label: 'Маркетинг', itemName: 'Маркетинговые услуги за месяц', unit: 'усл', quantity: 1, note: 'Ежемесячный пакет услуг' },
+  { label: 'Консалтинг', itemName: 'Консультационные услуги', unit: 'ч', quantity: 10, note: 'Консультации по заявке заказчика' },
+] as const
+
 export function InvoiceForm({ initialData, defaultExpanded = true }: InvoiceFormProps) {
   const [number, setNumber] = useState(generateDocNumber())
   const [date, setDate] = useState(todayISO())
@@ -46,8 +55,18 @@ export function InvoiceForm({ initialData, defaultExpanded = true }: InvoiceForm
   const [error, setError] = useState('')
   const [aiWarning, setAiWarning] = useState('')
   const [expanded, setExpanded] = useState(defaultExpanded)
+  const formStartTrackedRef = useRef(false)
+  const companyFilledTrackedRef = useRef(false)
 
   const totals = useMemo(() => calculateTotals(items), [items])
+  const wizardStatus = useMemo(() => getInvoiceWizardStatus({
+    supplierName: supplier.name,
+    supplierInn: supplier.inn,
+    buyerName: buyer.name,
+    buyerInn: buyer.inn,
+    firstItemName: items[0]?.name,
+    totalAmount: totals.grandTotal,
+  }), [supplier, buyer, items, totals.grandTotal])
 
   // Apply initial data when it changes
   useEffect(() => {
@@ -132,16 +151,65 @@ export function InvoiceForm({ initialData, defaultExpanded = true }: InvoiceForm
     setExpanded(true)
   }, [initialData])
 
+  const handleFirstInteraction = useCallback(() => {
+    if (formStartTrackedRef.current) return
+    formStartTrackedRef.current = true
+    trackFormStart('invoice')
+  }, [])
+
+  useEffect(() => {
+    if (!canTrackCompanyFilled({
+      supplier,
+      buyer,
+      alreadyTracked: companyFilledTrackedRef.current,
+    })) return
+
+    companyFilledTrackedRef.current = true
+    trackCompanyFilled('invoice')
+  }, [supplier, buyer])
+
+  const handleCreateActFromInvoice = useCallback(() => {
+    const draft = buildActDraftFromInvoice({
+      number,
+      date,
+      supplier,
+      buyer,
+      items,
+    })
+
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem('omydoc:invoice_to_act_draft', JSON.stringify(draft))
+      window.location.href = '/akt?from=invoice'
+    }
+  }, [number, date, supplier, buyer, items])
+
+  const applyInvoiceTemplate = useCallback((template: (typeof invoiceTemplates)[number]) => {
+    setItems([
+      calculateLineItem({
+        id: generateId(),
+        name: template.itemName,
+        unit: template.unit,
+        quantity: template.quantity,
+        price: 0,
+        vatRate: 0,
+      }),
+    ])
+    setNotes(template.note)
+  }, [])
+
   const handleGenerate = useCallback(async () => {
     if (!supplier.inn || !supplier.name) {
+      trackValidationError('invoice', 'supplier')
       setError('Заполните реквизиты поставщика (ИНН и наименование)')
       return
     }
     if (!buyer.inn || !buyer.name) {
+      trackValidationError('invoice', 'buyer')
       setError('Заполните реквизиты покупателя (ИНН и наименование)')
       return
     }
     if (items.length === 0 || !items[0].name) {
+      trackValidationError('invoice', 'items')
       setError('Добавьте хотя бы одну позицию')
       return
     }
@@ -181,6 +249,9 @@ export function InvoiceForm({ initialData, defaultExpanded = true }: InvoiceForm
       
       trackPdfGenerated('invoice')
       trackPdfDownloaded('invoice')
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem('omydoc:package:done:invoice', '1')
+      }
     } catch (e) {
       setError('Ошибка генерации PDF. Попробуйте ещё раз.')
       trackGenerationError('invoice', e instanceof Error ? e.message : 'Unknown error')
@@ -190,8 +261,57 @@ export function InvoiceForm({ initialData, defaultExpanded = true }: InvoiceForm
     }
   }, [number, date, supplier, buyer, items, notes, totals])
 
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id)
+    if (element) element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" onFocusCapture={handleFirstInteraction}>
+      {expanded && (
+        <Card>
+          <CardContent className="pt-6">
+            <h3 className="font-semibold text-lg mb-3">Мастер заполнения счёта</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {[
+                { id: 'invoice-parties', title: 'Стороны', done: wizardStatus.partiesDone },
+                { id: 'invoice-items', title: 'Позиции', done: wizardStatus.itemsDone },
+                { id: 'invoice-total', title: 'Проверка', done: wizardStatus.totalsDone },
+              ].map((step) => (
+                <button
+                  key={step.id}
+                  type="button"
+                  onClick={() => scrollToSection(step.id)}
+                  className={`text-left rounded-xl border px-3 py-2 transition ${step.done ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200 hover:border-violet-300'}`}
+                >
+                  <div className="text-xs text-slate-500">{step.done ? '✓ Готово' : 'Нужно заполнить'}</div>
+                  <div className="text-sm font-semibold text-slate-900">{step.title}</div>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card>
+        <CardContent className="pt-6">
+          <h3 className="font-semibold text-lg mb-3">Быстрые шаблоны счёта</h3>
+          <div className="flex flex-wrap gap-2">
+            {invoiceTemplates.map((template) => (
+              <button
+                key={template.label}
+                type="button"
+                onClick={() => applyInvoiceTemplate(template)}
+                className="text-xs px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 hover:border-violet-300"
+              >
+                {template.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-slate-500 mt-2">Подставляем первую позицию и примечание — остаётся уточнить цену и реквизиты.</p>
+        </CardContent>
+      </Card>
+
       {/* Collapsible header */}
       {!defaultExpanded && (
         <button
@@ -245,7 +365,7 @@ export function InvoiceForm({ initialData, defaultExpanded = true }: InvoiceForm
           </Card>
 
           {/* Поставщик */}
-          <Card>
+          <Card id="invoice-parties">
             <CardContent>
               <CompanyFields
                 prefix="supplier"
@@ -270,14 +390,14 @@ export function InvoiceForm({ initialData, defaultExpanded = true }: InvoiceForm
           </Card>
 
           {/* Позиции */}
-          <Card>
+          <Card id="invoice-items">
             <CardContent>
               <LineItemsTable items={items} onChange={setItems} />
             </CardContent>
           </Card>
 
           {/* Итого */}
-          <Card>
+          <Card id="invoice-total">
             <CardContent>
               <div className="space-y-3">
                 <div className="flex justify-end gap-4 text-sm">
@@ -336,19 +456,30 @@ export function InvoiceForm({ initialData, defaultExpanded = true }: InvoiceForm
             </div>
           )}
 
-          {/* Кнопка генерации */}
-          <Button
-            onClick={handleGenerate}
-            disabled={loading}
-            size="xl"
-            className="w-full"
-          >
-            {loading ? (
-              <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> Генерация PDF...</>
-            ) : (
-              <><FileDown className="h-5 w-5 mr-2" /> Скачать счёт в PDF</>
-            )}
-          </Button>
+          {/* Кнопки действий */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Button
+              onClick={handleGenerate}
+              disabled={loading}
+              size="xl"
+              className="w-full"
+            >
+              {loading ? (
+                <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> Генерация PDF...</>
+              ) : (
+                <><FileDown className="h-5 w-5 mr-2" /> Скачать счёт в PDF</>
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="xl"
+              className="w-full"
+              onClick={handleCreateActFromInvoice}
+            >
+              Создать акт из этого счёта
+            </Button>
+          </div>
         </>
       )}
     </div>
