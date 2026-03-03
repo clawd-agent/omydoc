@@ -34,3 +34,19 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## CI/CD (GitHub Actions)
+
+Workflow: `.github/workflows/ci-cd.yml`.
+
+- On every `push` and `pull_request`: `npm ci` -> `npm run lint` -> `npm run build`.
+- On `push` to the default branch: deploy to production server via SSH.
+
+Required GitHub Actions secrets:
+
+- `SSH_HOST`
+- `SSH_PORT`
+- `SSH_USER`
+- `SSH_PRIVATE_KEY`
+- `SSH_KNOWN_HOSTS` (optional but recommended)
+- `DEPLOY_PATH` (for this service: `/home/chesnokovsm/omydoc`)
