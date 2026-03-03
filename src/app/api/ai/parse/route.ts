@@ -233,28 +233,30 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const parsedData = parsed ?? {}
+
     try {
-      if ((parsed.supplier as Record<string, string> | undefined)?.inn) {
-        const supplierInn = (parsed.supplier as Record<string, string>).inn
+      if ((parsedData.supplier as Record<string, string> | undefined)?.inn) {
+        const supplierInn = (parsedData.supplier as Record<string, string>).inn
         const companies = await findCompanyByInn(supplierInn)
-        if (companies.length > 0) parsed.supplier = dadataToCompanyInfo(companies[0])
+        if (companies.length > 0) parsedData.supplier = dadataToCompanyInfo(companies[0])
       }
 
-      if ((parsed.buyer as Record<string, string> | undefined)?.inn) {
-        const buyerInn = (parsed.buyer as Record<string, string>).inn
+      if ((parsedData.buyer as Record<string, string> | undefined)?.inn) {
+        const buyerInn = (parsedData.buyer as Record<string, string>).inn
         const companies = await findCompanyByInn(buyerInn)
-        if (companies.length > 0) parsed.buyer = dadataToCompanyInfo(companies[0])
+        if (companies.length > 0) parsedData.buyer = dadataToCompanyInfo(companies[0])
       }
     } catch (dadataError) {
       console.warn('DaData enrichment failed:', dadataError)
     }
 
-    const warnings = buildParseWarnings(type, parsed, parseConfidence)
+    const warnings = buildParseWarnings(type, parsedData, parseConfidence)
     if (usedLocalFallback) warnings.unshift('Использован локальный офлайн-разбор — проверьте формулировки')
 
     const payload = {
       success: true,
-      data: parsed,
+      data: parsedData,
       usage,
       meta: {
         inputTruncated: normalizedInput.truncated,
