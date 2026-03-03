@@ -79,6 +79,6 @@ jobs:
           ssh -p "${SSH_PORT:-22}" "$SSH_USER@$SSH_HOST" << EOF
             set -euo pipefail
             cd "$DEPLOY_PATH"
-            docker compose -f docker-compose.yml up -d --build --remove-orphans
+            DOCKER_BUILDKIT=0 COMPOSE_DOCKER_CLI_BUILD=0 docker compose -f docker-compose.yml up -d --build --remove-orphans
             docker image prune -f
           EOF
