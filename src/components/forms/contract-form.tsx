@@ -16,6 +16,7 @@ import { amountToWords } from '@/lib/documents/number-to-words'
 import { trackPdfGenerated, trackPdfDownloaded, trackGenerationError, trackFormStart, trackCompanyFilled, trackValidationError } from '@/lib/analytics/metrika'
 import { canTrackCompanyFilled } from '@/lib/analytics/funnel'
 import { getContractWizardStatus } from '@/lib/ai/contract-wizard'
+import { buildActDraftFromContract, buildInvoiceDraftFromContract } from '@/lib/documents/bundle'
 
 const emptyCompany: CompanyInfo = {
   name: '', inn: '', kpp: '', ogrn: '', address: '',
@@ -39,6 +40,18 @@ interface ParsedContractData {
 interface ContractFormProps {
   initialData?: ParsedContractData
 }
+
+const clauseSnippets = {
+  paymentTerms: [
+    'Оплата осуществляется в течение 5 рабочих дней после подписания акта оказанных услуг.',
+    '50% предоплата в течение 3 рабочих дней, 50% — в течение 5 рабочих дней после подписания акта.',
+    'Ежемесячная оплата до 5-го числа месяца, следующего за расчётным.',
+  ],
+  liability: [
+    'За просрочку оплаты Заказчик уплачивает неустойку 0,1% от суммы задолженности за каждый день просрочки.',
+    'Стороны освобождаются от ответственности при наступлении обстоятельств непреодолимой силы.',
+  ],
+} as const
 
 const contractTemplates = [
   {
@@ -87,6 +100,7 @@ export function ContractForm({ initialData }: ContractFormProps) {
   const [jurisdiction, setJurisdiction] = useState('Арбитражный суд г. Москвы')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [generated, setGenerated] = useState(false)
   const formStartTrackedRef = useRef(false)
   const companyFilledTrackedRef = useRef(false)
 
@@ -104,6 +118,16 @@ export function ContractForm({ initialData }: ContractFormProps) {
     jurisdiction,
     endDate,
   }), [supplier, buyer, subject, items, paymentDays, paymentTerms, penaltyRate, jurisdiction, endDate])
+
+  const missingChecklist = useMemo(() => {
+    const issues: string[] = []
+    if (!wizardStatus.partiesDone) issues.push('Заполните стороны и ИНН')
+    if (!wizardStatus.scopeDone) issues.push('Уточните предмет и позицию услуги')
+    if (!wizardStatus.paymentDone) issues.push('Проверьте условия и срок оплаты')
+    if (!wizardStatus.liabilityDone) issues.push('Проверьте неустойку и подсудность')
+    if (!wizardStatus.previewDone) issues.push('Укажите дату окончания договора')
+    return issues
+  }, [wizardStatus])
 
   useEffect(() => {
     if (!initialData) return
@@ -174,6 +198,16 @@ export function ContractForm({ initialData }: ContractFormProps) {
     ])
   }, [])
 
+  const appendPaymentSnippet = useCallback((snippet: string) => {
+    setPaymentTerms((prev) => (prev?.trim() ? `${prev.trim()} ${snippet}` : snippet))
+  }, [])
+
+  const applyLiabilitySnippet = useCallback((snippet: string) => {
+    if (snippet.includes('0,1%')) {
+      setPenaltyRate(0.1)
+    }
+  }, [])
+
   const useSubjectAsFirstItem = useCallback(() => {
     const normalized = subject.trim()
     if (!normalized) return
@@ -197,6 +231,36 @@ export function ContractForm({ initialData }: ContractFormProps) {
       ]
     })
   }, [subject])
+
+  const handleCreateInvoiceFromContract = useCallback(() => {
+    const draft = buildInvoiceDraftFromContract({
+      number,
+      date,
+      supplier,
+      buyer,
+      items,
+    })
+
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem('omydoc:contract_to_invoice_draft', JSON.stringify(draft))
+      window.location.href = '/schet?from=contract'
+    }
+  }, [number, date, supplier, buyer, items])
+
+  const handleCreateActFromContract = useCallback(() => {
+    const draft = buildActDraftFromContract({
+      number,
+      date,
+      supplier,
+      buyer,
+      items,
+    })
+
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem('omydoc:contract_to_act_draft', JSON.stringify(draft))
+      window.location.href = '/akt?from=contract'
+    }
+  }, [number, date, supplier, buyer, items])
 
   const handleGenerate = useCallback(async () => {
     if (!supplier.inn || !supplier.name) {
@@ -225,6 +289,7 @@ export function ContractForm({ initialData }: ContractFormProps) {
       return
     }
     setError('')
+    setGenerated(false)
 
     const data: ContractData = {
       number,
@@ -270,6 +335,7 @@ export function ContractForm({ initialData }: ContractFormProps) {
       if (typeof window !== 'undefined') {
         window.sessionStorage.setItem('omydoc:package:done:contract', '1')
       }
+      setGenerated(true)
     } catch (e) {
       setError('Ошибка генерации PDF. Попробуйте ещё раз.')
       trackGenerationError('contract', e instanceof Error ? e.message : 'Unknown error')
@@ -432,6 +498,46 @@ export function ContractForm({ initialData }: ContractFormProps) {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardContent className="pt-6">
+          <h3 className="font-semibold text-lg mb-3">AI-подсказки формулировок</h3>
+          <div className="space-y-3">
+            <div>
+              <div className="text-sm font-semibold text-slate-700 mb-2">Оплата</div>
+              <div className="flex flex-wrap gap-2">
+                {clauseSnippets.paymentTerms.map((snippet, idx) => (
+                  <button
+                    key={snippet}
+                    type="button"
+                    onClick={() => appendPaymentSnippet(snippet)}
+                    className="text-xs px-3 py-1.5 rounded-full bg-violet-50 border border-violet-200 text-violet-700 hover:bg-violet-100"
+                    title={snippet}
+                  >
+                    {idx === 0 ? 'Постоплата 5 дней' : idx === 1 ? '50/50 этапы' : 'Ежемесячная оплата'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-slate-700 mb-2">Ответственность</div>
+              <div className="flex flex-wrap gap-2">
+                {clauseSnippets.liability.map((snippet, idx) => (
+                  <button
+                    key={snippet}
+                    type="button"
+                    onClick={() => applyLiabilitySnippet(snippet)}
+                    className="text-xs px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100"
+                    title={snippet}
+                  >
+                    {idx === 0 ? 'Неустойка 0.1%' : 'Форс-мажор'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Условия оплаты */}
       <Card id="payment">
         <CardContent className="pt-6">
@@ -513,6 +619,27 @@ export function ContractForm({ initialData }: ContractFormProps) {
           </div>
         </CardContent>
       </Card>
+
+      {missingChecklist.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg">
+          <div className="font-semibold mb-1">Перед скачиванием проверьте:</div>
+          <ul className="list-disc pl-5 text-sm space-y-1">
+            {missingChecklist.map((issue) => (
+              <li key={issue}>{issue}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {generated && (
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-lg">
+          <div className="font-semibold">Договор готов. Рекомендуемый следующий шаг — счёт.</div>
+          <div className="mt-2 space-y-2">
+            <Button type="button" onClick={handleCreateInvoiceFromContract} className="w-full sm:w-auto">Создать счёт из договора</Button>
+            <Button type="button" variant="ghost" onClick={handleCreateActFromContract} className="w-full sm:w-auto">Или сразу создать акт</Button>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>

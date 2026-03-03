@@ -19,25 +19,26 @@ interface ParsedData {
 }
 
 export function ActGenerator() {
-  const [initialState] = useState<{ draft: ParsedData | null; source: 'none' | 'invoice' | 'bundle' }>(() => {
+  const [initialState] = useState<{ draft: ParsedData | null; source: 'none' | 'invoice' | 'bundle' | 'contract' }>(() => {
     if (typeof window === 'undefined') return { draft: null, source: 'none' }
 
     const rawInvoice = window.sessionStorage.getItem('omydoc:invoice_to_act_draft')
     const rawBundle = window.sessionStorage.getItem('omydoc:bundle_act_draft')
-    const raw = rawInvoice || rawBundle
-    const source: 'invoice' | 'bundle' = rawInvoice ? 'invoice' : 'bundle'
+    const rawContract = window.sessionStorage.getItem('omydoc:contract_to_act_draft')
+    const raw = rawInvoice || rawBundle || rawContract
+    const source: 'invoice' | 'bundle' | 'contract' = rawInvoice ? 'invoice' : (rawBundle ? 'bundle' : 'contract')
 
     if (!raw) return { draft: null, source: 'none' }
 
     try {
       const parsed = JSON.parse(raw) as ParsedData
-      if (source === 'invoice') {
-        window.sessionStorage.removeItem('omydoc:invoice_to_act_draft')
-      }
+      if (source === 'invoice') window.sessionStorage.removeItem('omydoc:invoice_to_act_draft')
+      if (source === 'contract') window.sessionStorage.removeItem('omydoc:contract_to_act_draft')
       return { draft: parsed, source }
     } catch {
       window.sessionStorage.removeItem('omydoc:invoice_to_act_draft')
       window.sessionStorage.removeItem('omydoc:bundle_act_draft')
+      window.sessionStorage.removeItem('omydoc:contract_to_act_draft')
       return { draft: null, source: 'none' }
     }
   })
@@ -132,7 +133,9 @@ export function ActGenerator() {
           <div>
             {source === 'invoice'
               ? 'Данные подтянуты из счёта. Проверьте акт и скачайте PDF.'
-              : 'Пакетный режим: шаг 3/3 — акт. Данные подтянуты автоматически.'}
+              : source === 'contract'
+                ? 'Данные подтянуты из договора. Проверьте акт и скачайте PDF.'
+                : 'Пакетный режим: шаг 3/3 — акт. Данные подтянуты автоматически.'}
           </div>
           {source === 'bundle' && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">

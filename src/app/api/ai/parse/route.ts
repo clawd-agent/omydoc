@@ -8,9 +8,62 @@ import { buildParseWarnings, calculateParseConfidence, shouldRetryWithStrongMode
 
 const PROXYAPI_KEY = process.env.PROXYAPI_KEY
 const PARSE_CACHE_TTL_MS = 1000 * 60 * 10
+const PARSE_CACHE_MAX_ENTRIES = 200
+const DADATA_CACHE_TTL_MS = 1000 * 60 * 30
+const DADATA_CACHE_MAX_ENTRIES = 500
 const parseCache = new Map<string, { expiresAt: number; payload: unknown }>()
+const dadataCache = new Map<string, { expiresAt: number; payload: unknown }>()
 
 type DocType = 'invoice' | 'act' | 'contract'
+
+function parseFlexibleNumber(raw: unknown, fallback = 0) {
+  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : fallback
+  if (typeof raw !== 'string') return fallback
+
+  const normalized = raw
+    .replace(/\s+/g, '')
+    .replace(',', '.')
+    .replace(/[^\d.-]/g, '')
+
+  const parsed = Number(normalized)
+  return Number.isFinite(parsed) ? parsed : fallback
+}
+
+function normalizeVatRate(raw: unknown, fallback = 0) {
+  const num = parseFlexibleNumber(raw, fallback)
+  const allowed = [0, 5, 7, 10, 20, 22]
+  return allowed.includes(num) ? num : fallback
+}
+
+function postProcessParsed(type: DocType, parsed: Record<string, unknown>, sourceText: string) {
+  if (Array.isArray(parsed.items)) {
+    parsed.items = parsed.items.map((item) => {
+      const obj = (item ?? {}) as Record<string, unknown>
+      const rawQty = parseFlexibleNumber(obj.quantity ?? obj.qty, 1)
+      const rawPrice = parseFlexibleNumber(obj.price, 0)
+      const quantity = Math.max(1, Number(rawQty.toFixed(3)))
+      const price = Math.max(0, Number(rawPrice.toFixed(2)))
+
+      return {
+        name: String(obj.name || obj.item_name || 'Услуги'),
+        quantity,
+        unit: String(obj.unit || 'усл'),
+        price,
+        vatRate: normalizeVatRate(obj.vatRate ?? obj.vat, 0),
+      }
+    })
+  }
+
+  if (/без\s+ндс|ндс\s*0/i.test(sourceText) && Array.isArray(parsed.items)) {
+    parsed.items = parsed.items.map((item) => ({ ...(item as Record<string, unknown>), vatRate: 0 }))
+  }
+
+  if (type === 'contract' && !parsed.subject && Array.isArray(parsed.items) && parsed.items[0]) {
+    parsed.subject = (parsed.items[0] as Record<string, unknown>).name || ''
+  }
+
+  return parsed
+}
 
 function parseAndNormalizeAIContent(content: string) {
   const jsonStr = content
@@ -57,12 +110,86 @@ function normalizeNum(raw?: string) {
   return Number(raw.replace(/\s+/g, '').replace(',', '.')) || 0
 }
 
+function pruneCache(map: Map<string, { expiresAt: number; payload: unknown }>, maxEntries: number) {
+  const now = Date.now()
+
+  for (const [key, value] of map.entries()) {
+    if (value.expiresAt <= now) map.delete(key)
+  }
+
+  if (map.size <= maxEntries) return
+
+  const overflow = map.size - maxEntries
+  let removed = 0
+  for (const key of map.keys()) {
+    map.delete(key)
+    removed += 1
+    if (removed >= overflow) break
+  }
+}
+
+function pruneParseCache() {
+  pruneCache(parseCache, PARSE_CACHE_MAX_ENTRIES)
+}
+
+function pruneDadataCache() {
+  pruneCache(dadataCache, DADATA_CACHE_MAX_ENTRIES)
+}
+
+function sanitizePartyName(raw?: string) {
+  if (!raw) return undefined
+  const cleaned = raw
+    .replace(/["'`«»]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  if (!cleaned || cleaned.length < 2) return undefined
+
+  const badTail = /(\b(?:инн|кпп|огрн|договор|счет|акт)\b.*)$/i
+  const withoutTail = cleaned.replace(badTail, '').trim()
+
+  if (!withoutTail) return undefined
+  return withoutTail.slice(0, 120)
+}
+
 function extractPartyName(text: string, role: 'supplier' | 'buyer') {
   const pattern = role === 'supplier'
-    ? /(?:от|исполнитель)\s+(.+?)(?=\s+(?:инн|для|заказчик|покупател[ья]|за|на)\b|[,.;\n]|$)/i
+    ? /(?:от|исполнитель|поставщик)\s+(.+?)(?=\s+(?:инн|для|заказчик|покупател[ья]|за|на)\b|[,.;\n]|$)/i
     : /(?:для|заказчик|покупател[ья])\s+(.+?)(?=\s+(?:инн|за|на|по|договор)\b|[,.;\n]|$)/i
 
-  return text.match(pattern)?.[1]?.trim()
+  return sanitizePartyName(text.match(pattern)?.[1])
+}
+
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs = 12000) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+
+  try {
+    return await fetch(url, { ...init, signal: controller.signal })
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+async function findCompanyByInnCached(inn: string) {
+  const now = Date.now()
+  const cached = dadataCache.get(inn)
+  if (cached && cached.expiresAt > now) {
+    return (cached.payload ?? null) as ReturnType<typeof dadataToCompanyInfo> | null
+  }
+  if (cached && cached.expiresAt <= now) dadataCache.delete(inn)
+
+  const companies = await findCompanyByInn(inn)
+  if (!companies.length) {
+    dadataCache.set(inn, { expiresAt: now + DADATA_CACHE_TTL_MS, payload: null })
+    pruneDadataCache()
+    return null
+  }
+
+  const mapped = dadataToCompanyInfo(companies[0])
+  dadataCache.set(inn, { expiresAt: now + DADATA_CACHE_TTL_MS, payload: mapped })
+  pruneDadataCache()
+  return mapped
 }
 
 function parseHeuristic(text: string, type: DocType) {
@@ -73,11 +200,18 @@ function parseHeuristic(text: string, type: DocType) {
   const qtyMatch = text.match(/(\d+[\d\s]*(?:[.,]\d+)?)\s*(час(?:а|ов)?|ч\b|шт\b|усл\b)/i)
   const priceMatch = text.match(/(?:по\s*)?(\d+[\d\s]*(?:[.,]\d+)?)\s*(?:руб(?:\.|лей)?|₽)/i)
   const itemName = text.match(/(?:за|на)\s+([^,.\n;]+)/i)?.[1]?.trim() || 'Услуги'
+  const vatMatch = text.match(/ндс\s*(\d{1,2})\s*%?/i)
+  const vatRate = vatMatch
+    ? normalizeNum(vatMatch[1])
+    : (/(без\s+ндс|ндс\s*0)/i.test(text) ? 0 : (/\bс\s+ндс\b/i.test(text) ? 20 : 0))
 
   const contractNumber = text.match(/договор[ау]?\s*№?\s*([\w/-]+)/i)?.[1]
   const contractDate = normalizeDate(text.match(/договор[ау]?.{0,20}?от\s*(\d{2}[./-]\d{2}[./-]\d{4})/i)?.[1])
   const endDate = normalizeDate(text.match(/(?:срок\s*до|до)\s*(\d{2}[./-]\d{2}[./-]\d{4})/i)?.[1])
-  const paymentDays = normalizeNum(text.match(/оплат[аы]\s*(\d+)\s*д/i)?.[1]) || undefined
+  const paymentDays = normalizeNum(
+    text.match(/оплат[аы]\s*(\d+)\s*д/i)?.[1]
+      || text.match(/в\s*течение\s*(\d+)\s*(?:рабочих\s*)?д/i)?.[1]
+  ) || undefined
 
   const parsed: Record<string, unknown> = {
     supplier: {
@@ -94,7 +228,7 @@ function parseHeuristic(text: string, type: DocType) {
         quantity: qtyMatch ? normalizeNum(qtyMatch[1]) : 1,
         unit: qtyMatch?.[2]?.toLowerCase().includes('ч') ? 'ч' : 'усл',
         price: normalizeNum(priceMatch?.[1]),
-        vatRate: 0,
+        vatRate,
       },
     ],
   }
@@ -125,7 +259,14 @@ export async function POST(request: NextRequest) {
     const modelConfig = getModelConfigByType(type)
     const normalizedInput = normalizeAiInput(text, modelConfig.max_input_chars)
 
-    const cacheKey = createHash('sha1').update(`${type}::${normalizedInput.text}`).digest('hex')
+    const cacheCanonicalText = normalizedInput.text
+      .toLowerCase()
+      .replace(/ё/g, 'е')
+      .replace(/["'`«»]/g, '')
+      .replace(/[.,;:!?()\[\]{}]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+    const cacheKey = createHash('sha1').update(`${type}::${cacheCanonicalText}`).digest('hex')
     const cached = parseCache.get(cacheKey)
     if (cached && cached.expiresAt > Date.now()) {
       const payload = cached.payload as { meta?: Record<string, unknown> }
@@ -153,6 +294,7 @@ export async function POST(request: NextRequest) {
     let parseConfidence = 0
     let usedStrongFallback = false
     let usedLocalFallback = false
+    let skippedRemoteForShortInput = false
 
     const messages = [
       { role: 'system', content: getSystemPrompt(type) },
@@ -160,9 +302,16 @@ export async function POST(request: NextRequest) {
       { role: 'user', content: normalizedInput.text },
     ]
 
-    if (PROXYAPI_KEY) {
+    const minRemoteCharsByType: Record<DocType, number> = {
+      invoice: 24,
+      act: 28,
+      contract: 40,
+    }
+    const shouldSkipRemote = normalizedInput.text.trim().length < minRemoteCharsByType[type]
+
+    if (PROXYAPI_KEY && !shouldSkipRemote) {
       try {
-        const response = await fetch('https://api.proxyapi.ru/openai/v1/chat/completions', {
+        const response = await fetchWithTimeout('https://api.proxyapi.ru/openai/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -174,15 +323,15 @@ export async function POST(request: NextRequest) {
             temperature: modelConfig.temperature,
             max_tokens: modelConfig.max_tokens,
           }),
-        })
+        }, 12000)
 
         if (response.ok) {
           const data = await response.json()
           const content = data.choices?.[0]?.message?.content
           usage = data.usage
           if (content) {
-            parsed = parseAndNormalizeAIContent(content)
-            parseConfidence = calculateParseConfidence(type, parsed ?? {})
+            parsed = postProcessParsed(type, parseAndNormalizeAIContent(content), normalizedInput.text)
+            parseConfidence = calculateParseConfidence(type, parsed as Record<string, unknown>)
           }
         }
       } catch (e) {
@@ -191,14 +340,15 @@ export async function POST(request: NextRequest) {
     }
 
     if (!parsed) {
-      parsed = parseHeuristic(normalizedInput.text, type)
-      parseConfidence = Math.max(0.35, calculateParseConfidence(type, parsed))
+      parsed = postProcessParsed(type, parseHeuristic(normalizedInput.text, type), normalizedInput.text)
+      parseConfidence = Math.max(0.35, calculateParseConfidence(type, parsed as Record<string, unknown>))
       usedLocalFallback = true
+      skippedRemoteForShortInput = shouldSkipRemote
     }
 
     if (!usedLocalFallback && shouldRetryWithStrongModel(type, parseConfidence, normalizedInput.text.length) && PROXYAPI_KEY) {
       try {
-        const retryResponse = await fetch('https://api.proxyapi.ru/openai/v1/chat/completions', {
+        const retryResponse = await fetchWithTimeout('https://api.proxyapi.ru/openai/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -213,13 +363,13 @@ export async function POST(request: NextRequest) {
             temperature: 0,
             max_tokens: modelConfig.max_tokens + 400,
           }),
-        })
+        }, 15000)
 
         if (retryResponse.ok) {
           const retryData = await retryResponse.json()
           const retryContent = retryData.choices?.[0]?.message?.content
           if (retryContent) {
-            const retryParsed = parseAndNormalizeAIContent(retryContent)
+            const retryParsed = postProcessParsed(type, parseAndNormalizeAIContent(retryContent), normalizedInput.text)
             const retryConfidence = calculateParseConfidence(type, retryParsed)
             if (retryConfidence > parseConfidence) {
               parsed = retryParsed
@@ -233,26 +383,46 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const parsedData = parsed ?? {}
+    if (!parsed) {
+      parsed = postProcessParsed(type, parseHeuristic(normalizedInput.text, type), normalizedInput.text)
+    }
 
     try {
-      if ((parsedData.supplier as Record<string, string> | undefined)?.inn) {
-        const supplierInn = (parsedData.supplier as Record<string, string>).inn
-        const companies = await findCompanyByInn(supplierInn)
-        if (companies.length > 0) parsedData.supplier = dadataToCompanyInfo(companies[0])
-      }
+      const supplierInnRaw = (parsed.supplier as Record<string, string> | undefined)?.inn?.trim()
+      const buyerInnRaw = (parsed.buyer as Record<string, string> | undefined)?.inn?.trim()
+      const supplierInn = supplierInnRaw && /^(\d{10}|\d{12})$/.test(supplierInnRaw) ? supplierInnRaw : undefined
+      const buyerInn = buyerInnRaw && /^(\d{10}|\d{12})$/.test(buyerInnRaw) ? buyerInnRaw : undefined
 
-      if ((parsedData.buyer as Record<string, string> | undefined)?.inn) {
-        const buyerInn = (parsedData.buyer as Record<string, string>).inn
-        const companies = await findCompanyByInn(buyerInn)
-        if (companies.length > 0) parsedData.buyer = dadataToCompanyInfo(companies[0])
+      if (supplierInn && buyerInn && supplierInn === buyerInn) {
+        const enriched = await findCompanyByInnCached(supplierInn)
+        if (enriched) {
+          parsed.supplier = enriched
+          parsed.buyer = enriched
+        }
+      } else {
+        const [enrichedSupplier, enrichedBuyer] = await Promise.all([
+          supplierInn ? findCompanyByInnCached(supplierInn) : Promise.resolve(null),
+          buyerInn ? findCompanyByInnCached(buyerInn) : Promise.resolve(null),
+        ])
+
+        if (enrichedSupplier) parsed.supplier = enrichedSupplier
+        if (enrichedBuyer) parsed.buyer = enrichedBuyer
       }
     } catch (dadataError) {
       console.warn('DaData enrichment failed:', dadataError)
     }
 
+    const parsedData = parsed as Record<string, unknown>
     const warnings = buildParseWarnings(type, parsedData, parseConfidence)
+    const parsedItems = parsedData.items as Array<Record<string, unknown>> | undefined
+    if (parsedItems?.some((item) => Number(item.quantity) > 1000)) {
+      warnings.unshift('Проверьте количество: AI мог некорректно распарсить большие числа')
+    }
+    if (parsedItems?.some((item) => Number(item.price) > 50_000_000)) {
+      warnings.unshift('Проверьте цену: обнаружено нетипично большое значение')
+    }
     if (usedLocalFallback) warnings.unshift('Использован локальный офлайн-разбор — проверьте формулировки')
+    if (skippedRemoteForShortInput) warnings.unshift('Короткий ввод: применён быстрый локальный разбор для ускорения и экономии')
 
     const payload = {
       success: true,
@@ -263,12 +433,14 @@ export async function POST(request: NextRequest) {
         parseConfidence,
         usedStrongFallback,
         usedLocalFallback,
+        skippedRemoteForShortInput,
         warnings,
         cacheHit: false,
       },
     }
 
     parseCache.set(cacheKey, { expiresAt: Date.now() + PARSE_CACHE_TTL_MS, payload })
+    pruneParseCache()
 
     return NextResponse.json(payload)
   } catch (error) {

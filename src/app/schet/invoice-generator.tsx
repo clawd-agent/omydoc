@@ -9,17 +9,30 @@ import { buildDraftPackageFromInvoiceAI } from '@/lib/documents/bundle'
 import { PackageStepper } from '@/components/layout/package-stepper'
 
 export function InvoiceGenerator() {
-  const [initialState] = useState<{ draft: ParsedInvoiceData | null; fromPackage: boolean }>(() => {
-    if (typeof window === 'undefined') return { draft: null, fromPackage: false }
-    const raw = window.sessionStorage.getItem('omydoc:bundle_invoice_draft')
-    if (!raw) return { draft: null, fromPackage: false }
+  const [initialState] = useState<{ draft: ParsedInvoiceData | null; fromPackage: boolean; fromAct: boolean; fromContract: boolean }>(() => {
+    if (typeof window === 'undefined') return { draft: null, fromPackage: false, fromAct: false, fromContract: false }
+
+    const rawPackage = window.sessionStorage.getItem('omydoc:bundle_invoice_draft')
+    const rawFromAct = window.sessionStorage.getItem('omydoc:act_to_invoice_draft')
+    const rawFromContract = window.sessionStorage.getItem('omydoc:contract_to_invoice_draft')
+
+    if (!rawPackage && !rawFromAct && !rawFromContract) return { draft: null, fromPackage: false, fromAct: false, fromContract: false }
 
     try {
-      const parsed = JSON.parse(raw) as ParsedInvoiceData
-      return { draft: parsed, fromPackage: true }
+      const parsed = JSON.parse(rawPackage || rawFromAct || rawFromContract || '{}') as ParsedInvoiceData
+      if (rawFromAct) window.sessionStorage.removeItem('omydoc:act_to_invoice_draft')
+      if (rawFromContract) window.sessionStorage.removeItem('omydoc:contract_to_invoice_draft')
+      return {
+        draft: parsed,
+        fromPackage: Boolean(rawPackage),
+        fromAct: Boolean(rawFromAct),
+        fromContract: Boolean(rawFromContract),
+      }
     } catch {
       window.sessionStorage.removeItem('omydoc:bundle_invoice_draft')
-      return { draft: null, fromPackage: false }
+      window.sessionStorage.removeItem('omydoc:act_to_invoice_draft')
+      window.sessionStorage.removeItem('omydoc:contract_to_invoice_draft')
+      return { draft: null, fromPackage: false, fromAct: false, fromContract: false }
     }
   })
 
@@ -187,6 +200,16 @@ export function InvoiceGenerator() {
             {initialState.fromPackage && (
               <div className="bg-blue-50 border border-blue-200 text-blue-700 px-5 py-3 rounded-xl font-medium mb-3">
                 Пакетный режим: после счёта можно перейти к акту.
+              </div>
+            )}
+            {initialState.fromAct && (
+              <div className="bg-violet-50 border border-violet-200 text-violet-700 px-5 py-3 rounded-xl font-medium mb-3">
+                Данные подтянуты из акта. Проверьте реквизиты и сумму счёта перед скачиванием.
+              </div>
+            )}
+            {initialState.fromContract && (
+              <div className="bg-indigo-50 border border-indigo-200 text-indigo-700 px-5 py-3 rounded-xl font-medium mb-3">
+                Данные подтянуты из договора. Основание в примечании заполнено автоматически.
               </div>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">

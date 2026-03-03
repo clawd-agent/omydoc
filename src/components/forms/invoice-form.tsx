@@ -42,7 +42,19 @@ const invoiceTemplates = [
   { label: 'Консалтинг', itemName: 'Консультационные услуги', unit: 'ч', quantity: 10, note: 'Консультации по заявке заказчика' },
 ] as const
 
+const invoiceNoteHints = [
+  'Без НДС (УСН). Оплата в течение 5 рабочих дней.',
+  'Предоплата 50% до начала работ, остаток 50% — после подписания акта.',
+  'Назначение платежа: оплата услуг по счёту без НДС.',
+] as const
+
+const taxModes = [
+  { label: 'УСН / без НДС', vatRate: 0 as VatRate, note: 'Без НДС (налоговый режим УСН).' },
+  { label: 'ОСНО / НДС 20%', vatRate: 20 as VatRate, note: 'НДС 20% включён в позиции счёта.' },
+] as const
+
 export function InvoiceForm({ initialData, defaultExpanded = true }: InvoiceFormProps) {
+  const taxModeStorageKey = 'omydoc:tax-mode:v1'
   const [number, setNumber] = useState(generateDocNumber())
   const [date, setDate] = useState(todayISO())
   const [supplier, setSupplier] = useState<CompanyInfo>(emptyCompany)
@@ -54,6 +66,7 @@ export function InvoiceForm({ initialData, defaultExpanded = true }: InvoiceForm
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [aiWarning, setAiWarning] = useState('')
+  const [generated, setGenerated] = useState(false)
   const [expanded, setExpanded] = useState(defaultExpanded)
   const formStartTrackedRef = useRef(false)
   const companyFilledTrackedRef = useRef(false)
@@ -67,6 +80,30 @@ export function InvoiceForm({ initialData, defaultExpanded = true }: InvoiceForm
     firstItemName: items[0]?.name,
     totalAmount: totals.grandTotal,
   }), [supplier, buyer, items, totals.grandTotal])
+
+  const missingChecklist = useMemo(() => {
+    const issues: string[] = []
+    if (!wizardStatus.partiesDone) issues.push('Заполните поставщика и покупателя (ИНН + наименование)')
+    if (!wizardStatus.itemsDone) issues.push('Добавьте позицию услуги/товара')
+    if (!wizardStatus.totalsDone) issues.push('Проверьте сумму и НДС перед скачиванием')
+    return issues
+  }, [wizardStatus])
+
+  const taxConsistencyIssue = useMemo(() => {
+    const hasVatItems = items.some((item) => item.vatRate > 0)
+    const notesLower = notes.toLowerCase()
+    const saysNoVat = notesLower.includes('без ндс') || notesLower.includes('усн')
+
+    if (saysNoVat && hasVatItems) {
+      return 'В примечании указано «без НДС», но в позициях есть НДС. Приведите режим к одному варианту.'
+    }
+
+    if (!saysNoVat && !hasVatItems && items.some((item) => item.price > 0)) {
+      return 'В позициях НДС = 0. Добавьте пометку «без НДС» или примените НДС 20%.'
+    }
+
+    return ''
+  }, [items, notes])
 
   // Apply initial data when it changes
   useEffect(() => {
@@ -197,6 +234,38 @@ export function InvoiceForm({ initialData, defaultExpanded = true }: InvoiceForm
     setNotes(template.note)
   }, [])
 
+  const applyNoteHint = useCallback((hint: string) => {
+    setNotes((prev) => (prev.trim() ? `${prev.trim()} ${hint}` : hint))
+  }, [])
+
+  const applyTaxMode = useCallback((mode: (typeof taxModes)[number]) => {
+    setItems((prev) => prev.map((item) => calculateLineItem({
+      ...item,
+      vatRate: mode.vatRate,
+    })))
+
+    setNotes((prev) => {
+      const normalized = prev.trim()
+      if (!normalized) return mode.note
+      if (normalized.includes(mode.note)) return normalized
+      return `${normalized} ${mode.note}`
+    })
+
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem(taxModeStorageKey, mode.label)
+    }
+
+    setAiWarning('')
+  }, [taxModeStorageKey])
+
+  useEffect(() => {
+    if (initialData) return
+    if (typeof window === 'undefined') return
+    const saved = window.sessionStorage.getItem(taxModeStorageKey)
+    const matched = taxModes.find((mode) => mode.label === saved)
+    if (matched) applyTaxMode(matched)
+  }, [initialData, applyTaxMode, taxModeStorageKey])
+
   const handleGenerate = useCallback(async () => {
     if (!supplier.inn || !supplier.name) {
       trackValidationError('invoice', 'supplier')
@@ -214,6 +283,7 @@ export function InvoiceForm({ initialData, defaultExpanded = true }: InvoiceForm
       return
     }
     setError('')
+    setGenerated(false)
 
     const data: InvoiceData = {
       number,
@@ -252,6 +322,7 @@ export function InvoiceForm({ initialData, defaultExpanded = true }: InvoiceForm
       if (typeof window !== 'undefined') {
         window.sessionStorage.setItem('omydoc:package:done:invoice', '1')
       }
+      setGenerated(true)
     } catch (e) {
       setError('Ошибка генерации PDF. Попробуйте ещё раз.')
       trackGenerationError('invoice', e instanceof Error ? e.message : 'Unknown error')
@@ -309,6 +380,44 @@ export function InvoiceForm({ initialData, defaultExpanded = true }: InvoiceForm
             ))}
           </div>
           <p className="text-xs text-slate-500 mt-2">Подставляем первую позицию и примечание — остаётся уточнить цену и реквизиты.</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="pt-6">
+          <h3 className="font-semibold text-lg mb-3">AI-подсказки для примечания</h3>
+          <div className="flex flex-wrap gap-2">
+            {invoiceNoteHints.map((hint) => (
+              <button
+                key={hint}
+                type="button"
+                onClick={() => applyNoteHint(hint)}
+                className="text-xs px-3 py-1.5 rounded-full bg-white border border-slate-200 hover:border-violet-300"
+              >
+                + {hint}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-slate-500 mt-2">Помогает быстро добавить юридически понятные формулировки в счёт.</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="pt-6">
+          <h3 className="font-semibold text-lg mb-3">Налоговый режим (AI Smart Defaults)</h3>
+          <div className="flex flex-wrap gap-2">
+            {taxModes.map((mode) => (
+              <button
+                key={mode.label}
+                type="button"
+                onClick={() => applyTaxMode(mode)}
+                className="text-xs px-3 py-1.5 rounded-full bg-white border border-slate-200 hover:border-violet-300"
+              >
+                {mode.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-slate-500 mt-2">За 1 клик применяем НДС ко всем позициям и добавляем корректную пометку в примечание.</p>
         </CardContent>
       </Card>
 
@@ -449,6 +558,41 @@ export function InvoiceForm({ initialData, defaultExpanded = true }: InvoiceForm
             </div>
           )}
 
+          {missingChecklist.length > 0 && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 px-5 py-4 rounded-xl">
+              <div className="font-semibold mb-1">Перед скачиванием проверьте:</div>
+              <ul className="list-disc pl-5 text-sm space-y-1">
+                {missingChecklist.map((issue) => (
+                  <li key={issue}>{issue}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {taxConsistencyIssue && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 px-5 py-4 rounded-xl">
+              <div className="font-semibold mb-1">Проверка налогового режима</div>
+              <div className="text-sm">{taxConsistencyIssue}</div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {taxModes.map((mode) => (
+                  <Button key={mode.label} type="button" variant="outline" size="sm" onClick={() => applyTaxMode(mode)}>
+                    Применить: {mode.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {generated && (
+            <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-4 rounded-xl">
+              <div className="font-semibold">Счёт готов. Следующий шаг:</div>
+              <div className="text-sm mt-1">Можно сразу сформировать акт по этим же данным.</div>
+              <div className="mt-2">
+                <Button type="button" variant="outline" onClick={handleCreateActFromInvoice}>Создать акт из этого счёта</Button>
+              </div>
+            </div>
+          )}
+
           {/* Ошибка */}
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-xl font-medium">
@@ -456,30 +600,19 @@ export function InvoiceForm({ initialData, defaultExpanded = true }: InvoiceForm
             </div>
           )}
 
-          {/* Кнопки действий */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Button
-              onClick={handleGenerate}
-              disabled={loading}
-              size="xl"
-              className="w-full"
-            >
-              {loading ? (
-                <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> Генерация PDF...</>
-              ) : (
-                <><FileDown className="h-5 w-5 mr-2" /> Скачать счёт в PDF</>
-              )}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="xl"
-              className="w-full"
-              onClick={handleCreateActFromInvoice}
-            >
-              Создать акт из этого счёта
-            </Button>
-          </div>
+          {/* Кнопка действия */}
+          <Button
+            onClick={handleGenerate}
+            disabled={loading}
+            size="xl"
+            className="w-full"
+          >
+            {loading ? (
+              <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> Генерация PDF...</>
+            ) : (
+              <><FileDown className="h-5 w-5 mr-2" /> Скачать счёт в PDF</>
+            )}
+          </Button>
         </>
       )}
     </div>

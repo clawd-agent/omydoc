@@ -1,6 +1,8 @@
 import type { DaDataCompany, DaDataBank, CompanyInfo } from '@/types'
 
 const DADATA_BASE = 'https://suggestions.dadata.ru/suggestions/api/4_1/rs'
+const DADATA_CACHE_TTL_MS = 1000 * 60 * 10
+const partyByInnCache = new Map<string, { expiresAt: number; data: DaDataCompany[] }>()
 
 async function dadataRequest<T>(endpoint: string, query: string): Promise<T[]> {
   const apiKey = process.env.DADATA_API_KEY
@@ -28,7 +30,32 @@ async function dadataRequest<T>(endpoint: string, query: string): Promise<T[]> {
 
 // Поиск компании по ИНН
 export async function findCompanyByInn(inn: string): Promise<DaDataCompany[]> {
-  return dadataRequest<DaDataCompany>('/findById/party', inn)
+  const key = inn.trim()
+  const cached = partyByInnCache.get(key)
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.data
+  }
+
+  if (cached && cached.expiresAt <= Date.now()) {
+    partyByInnCache.delete(key)
+  }
+
+  const data = await dadataRequest<DaDataCompany>('/findById/party', key)
+  partyByInnCache.set(key, {
+    expiresAt: Date.now() + DADATA_CACHE_TTL_MS,
+    data,
+  })
+
+  if (partyByInnCache.size > 300) {
+    for (const [cacheKey, value] of partyByInnCache.entries()) {
+      if (value.expiresAt <= Date.now()) {
+        partyByInnCache.delete(cacheKey)
+      }
+      if (partyByInnCache.size <= 250) break
+    }
+  }
+
+  return data
 }
 
 // Поиск банка по БИК

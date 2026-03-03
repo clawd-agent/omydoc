@@ -24,6 +24,60 @@ export function buildActDraftFromInvoice(invoice: InvoiceLikeDraft) {
   }
 }
 
+export function buildInvoiceDraftFromAct(act: InvoiceLikeDraft) {
+  return {
+    supplier: act.supplier,
+    buyer: act.buyer,
+    items: act.items.map((item) => ({
+      name: item.name,
+      quantity: item.quantity,
+      unit: item.unit,
+      price: item.price,
+      vatRate: item.vatRate,
+    })),
+    notes: `Основание: акт №${act.number} от ${act.date}`,
+  }
+}
+
+interface ContractLikeDraft {
+  number: string
+  date: string
+  supplier: CompanyInfo
+  buyer: CompanyInfo
+  items: LineItem[]
+}
+
+export function buildInvoiceDraftFromContract(contract: ContractLikeDraft) {
+  return {
+    supplier: contract.supplier,
+    buyer: contract.buyer,
+    items: contract.items.map((item) => ({
+      name: item.name,
+      quantity: item.quantity,
+      unit: item.unit,
+      price: item.price,
+      vatRate: item.vatRate,
+    })),
+    notes: `Основание: договор №${contract.number} от ${contract.date}`,
+  }
+}
+
+export function buildActDraftFromContract(contract: ContractLikeDraft) {
+  return {
+    supplier: contract.supplier,
+    buyer: contract.buyer,
+    items: contract.items.map((item) => ({
+      name: item.name,
+      quantity: item.quantity,
+      unit: item.unit,
+      price: item.price,
+      vatRate: item.vatRate,
+    })),
+    contractNumber: contract.number,
+    contractDate: contract.date,
+  }
+}
+
 interface ParsedInvoiceLikeData {
   supplier?: Record<string, string>
   buyer?: Record<string, string>

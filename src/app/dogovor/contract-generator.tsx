@@ -105,7 +105,7 @@ export function ContractGenerator() {
         <div className="bg-blue-50 border border-blue-200 text-blue-700 px-5 py-4 rounded-xl font-medium space-y-3">
           <div>Пакетный режим: данные подтянуты. Шаг 1/3 — договор.</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <button type="button" onClick={() => { if (typeof window !== 'undefined') window.location.href = '/schet?package=1&step=invoice' }} className="px-3 py-2 rounded-lg border border-blue-300 bg-white text-sm font-semibold">
+            <button type="button" onClick={() => { if (typeof window !== 'undefined') window.location.href = '/schet?package=1&step=invoice' }} className="px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700">
               Далее: счёт
             </button>
             <button type="button" onClick={() => { if (typeof window !== 'undefined') window.location.href = '/akt?package=1&step=act' }} className="px-3 py-2 rounded-lg border border-blue-300 bg-white text-sm font-semibold">

@@ -15,6 +15,7 @@ import { amountToWords } from '@/lib/documents/number-to-words'
 import { trackPdfGenerated, trackPdfDownloaded, trackGenerationError, trackFormStart, trackCompanyFilled, trackValidationError } from '@/lib/analytics/metrika'
 import { canTrackCompanyFilled } from '@/lib/analytics/funnel'
 import { getActWizardStatus } from '@/lib/ai/doc-wizard'
+import { buildInvoiceDraftFromAct } from '@/lib/documents/bundle'
 
 const emptyCompany: CompanyInfo = {
   name: '', inn: '', kpp: '', ogrn: '', address: '',
@@ -42,7 +43,19 @@ const actTemplates = [
   { label: 'Консалтинг', itemName: 'Консультационные услуги', unit: 'ч', quantity: 8, contractNumber: '3' },
 ] as const
 
+const taxModes = [
+  { label: 'УСН / без НДС', vatRate: 0 as const },
+  { label: 'ОСНО / НДС 20%', vatRate: 20 as const },
+] as const
+
+const actBasisHints = [
+  { label: 'Период = текущий месяц', apply: 'month' },
+  { label: 'Без договора (разовая услуга)', apply: 'single' },
+  { label: 'Дата договора = сегодня', apply: 'today' },
+] as const
+
 export function ActForm({ initialData }: ActFormProps) {
+  const taxModeStorageKey = 'omydoc:tax-mode:v1'
   const [number, setNumber] = useState(generateDocNumber())
   const [date, setDate] = useState(todayISO())
   const [supplier, setSupplier] = useState<CompanyInfo>(emptyCompany)
@@ -56,6 +69,7 @@ export function ActForm({ initialData }: ActFormProps) {
   const [periodTo, setPeriodTo] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [generated, setGenerated] = useState(false)
   const formStartTrackedRef = useRef(false)
   const companyFilledTrackedRef = useRef(false)
 
@@ -69,6 +83,32 @@ export function ActForm({ initialData }: ActFormProps) {
     contractNumber,
     totalAmount: totals.grandTotal,
   }), [supplier, buyer, items, contractNumber, totals.grandTotal])
+
+  const missingChecklist = useMemo(() => {
+    const issues: string[] = []
+    if (!wizardStatus.partiesDone) issues.push('Заполните исполнителя и заказчика (ИНН + наименование)')
+    if (!wizardStatus.basisDone) issues.push('Проверьте основание: номер/дата договора или оставьте осознанно пустым')
+    if (!wizardStatus.itemsDone) issues.push('Добавьте позицию выполненных работ/услуг')
+    if (!wizardStatus.totalsDone) issues.push('Проверьте итоговую сумму перед скачиванием')
+    return issues
+  }, [wizardStatus])
+
+  const taxConsistencyIssue = useMemo(() => {
+    const hasVatItems = items.some((item) => item.vatRate > 0)
+    const hasMoneyItems = items.some((item) => item.price > 0)
+
+    if (!hasMoneyItems) return ''
+
+    if (!supplier.inn || !buyer.inn) return ''
+
+    const likelyUsn = /\b\d{12}\b/.test(supplier.inn) || /\bип\b/i.test(supplier.name)
+
+    if (likelyUsn && hasVatItems) {
+      return 'Похоже на ИП/УСН, но в позициях акта указан НДС. Проверьте корректность налогового режима.'
+    }
+
+    return ''
+  }, [items, supplier.inn, supplier.name, buyer.inn])
 
   useEffect(() => {
     if (!initialData) return
@@ -132,6 +172,58 @@ export function ActForm({ initialData }: ActFormProps) {
     if (!contractNumber) setContractNumber(template.contractNumber)
   }, [contractNumber])
 
+  const applyTaxMode = useCallback((mode: (typeof taxModes)[number]) => {
+    setItems((prev) => prev.map((item) => calculateLineItem({ ...item, vatRate: mode.vatRate })))
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem(taxModeStorageKey, mode.label)
+    }
+  }, [taxModeStorageKey])
+
+  useEffect(() => {
+    if (initialData) return
+    if (typeof window === 'undefined') return
+    const saved = window.sessionStorage.getItem(taxModeStorageKey)
+    const matched = taxModes.find((mode) => mode.label === saved)
+    if (matched) applyTaxMode(matched)
+  }, [initialData, applyTaxMode, taxModeStorageKey])
+
+  const applyBasisHint = useCallback((hint: (typeof actBasisHints)[number]['apply']) => {
+    if (hint === 'single') {
+      setContractNumber('')
+      setContractDate('')
+      return
+    }
+
+    if (hint === 'today') {
+      if (!contractDate) setContractDate(todayISO())
+      return
+    }
+
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = now.getMonth()
+    const start = new Date(year, month, 1)
+    const end = new Date(year, month + 1, 0)
+    const toIso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    setPeriodFrom(toIso(start))
+    setPeriodTo(toIso(end))
+  }, [contractDate])
+
+  const handleCreateInvoiceFromAct = useCallback(() => {
+    const draft = buildInvoiceDraftFromAct({
+      number,
+      date,
+      supplier,
+      buyer,
+      items,
+    })
+
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem('omydoc:act_to_invoice_draft', JSON.stringify(draft))
+      window.location.href = '/schet?from=act'
+    }
+  }, [number, date, supplier, buyer, items])
+
   const handleGenerate = useCallback(async () => {
     if (!supplier.inn || !supplier.name) {
       trackValidationError('act', 'supplier')
@@ -149,6 +241,7 @@ export function ActForm({ initialData }: ActFormProps) {
       return
     }
     setError('')
+    setGenerated(false)
 
     const data: ActData = {
       number,
@@ -191,6 +284,7 @@ export function ActForm({ initialData }: ActFormProps) {
       if (typeof window !== 'undefined') {
         window.sessionStorage.setItem('omydoc:package:done:act', '1')
       }
+      setGenerated(true)
     } catch (e) {
       setError('Ошибка генерации PDF. Попробуйте ещё раз.')
       trackGenerationError('act', e instanceof Error ? e.message : 'Unknown error')
@@ -247,6 +341,44 @@ export function ActForm({ initialData }: ActFormProps) {
             ))}
           </div>
           <p className="text-xs text-slate-500 mt-2">Подставляем позицию и основу акта — остаётся проверить период и сумму.</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="pt-6">
+          <h3 className="font-semibold text-lg mb-3">AI-подсказки по основанию</h3>
+          <div className="flex flex-wrap gap-2">
+            {actBasisHints.map((hint) => (
+              <button
+                key={hint.label}
+                type="button"
+                onClick={() => applyBasisHint(hint.apply)}
+                className="text-xs px-3 py-1.5 rounded-full bg-white border border-slate-200 hover:border-violet-300"
+              >
+                {hint.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-slate-500 mt-2">Быстро заполняет спорные поля акта: период и основание.</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="pt-6">
+          <h3 className="font-semibold text-lg mb-3">Налоговый режим</h3>
+          <div className="flex flex-wrap gap-2">
+            {taxModes.map((mode) => (
+              <button
+                key={mode.label}
+                type="button"
+                onClick={() => applyTaxMode(mode)}
+                className="text-xs px-3 py-1.5 rounded-full bg-white border border-slate-200 hover:border-violet-300"
+              >
+                {mode.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-slate-500 mt-2">Применяет выбранный НДС ко всем позициям акта в один клик.</p>
         </CardContent>
       </Card>
 
@@ -359,6 +491,41 @@ export function ActForm({ initialData }: ActFormProps) {
           </div>
         </CardContent>
       </Card>
+
+      {missingChecklist.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg">
+          <div className="font-semibold mb-1">Перед скачиванием проверьте:</div>
+          <ul className="list-disc pl-5 text-sm space-y-1">
+            {missingChecklist.map((issue) => (
+              <li key={issue}>{issue}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {taxConsistencyIssue && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg">
+          <div className="font-semibold mb-1">Проверка налогового режима</div>
+          <div className="text-sm">{taxConsistencyIssue}</div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {taxModes.map((mode) => (
+              <Button key={mode.label} type="button" variant="outline" size="sm" onClick={() => applyTaxMode(mode)}>
+                Применить: {mode.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {generated && (
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-lg">
+          <div className="font-semibold">Акт готов. Следующий шаг:</div>
+          <div className="text-sm mt-1">Можно сразу создать счёт на оплату из данных акта.</div>
+          <div className="mt-2">
+            <Button type="button" variant="outline" onClick={handleCreateInvoiceFromAct}>Создать счёт из этого акта</Button>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>
