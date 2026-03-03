@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
           usage = data.usage
           if (content) {
             parsed = parseAndNormalizeAIContent(content)
-            parseConfidence = calculateParseConfidence(type, parsed)
+            parseConfidence = calculateParseConfidence(type, parsed ?? {})
           }
         }
       } catch (e) {
