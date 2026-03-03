@@ -71,12 +71,12 @@ jobs:
             --exclude ".env.*" \
             --exclude "docker-compose.yml" \
             --exclude "certbot-webroot/" \
-            -e "ssh -p ${SSH_PORT:-22}" \
+            -e "ssh -p ${SSH_PORT:-22} -o ServerAliveInterval=30 -o ServerAliveCountMax=20" \
             ./ "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/"
 
       - name: Deploy via SSH
         run: |
-          ssh -p "${SSH_PORT:-22}" "$SSH_USER@$SSH_HOST" << EOF
+          ssh -p "${SSH_PORT:-22}" -o ServerAliveInterval=30 -o ServerAliveCountMax=20 "$SSH_USER@$SSH_HOST" << EOF
             set -euo pipefail
             cd "$DEPLOY_PATH"
             DOCKER_BUILDKIT=0 COMPOSE_DOCKER_CLI_BUILD=0 docker compose -f docker-compose.yml up -d --build --remove-orphans
